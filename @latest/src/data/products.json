@@ -1,0 +1,29 @@
+[
+  {
+    "id": "p1",
+    "title": "Wireless Headphones",
+    "category": "Electronics",
+    "price": 2499,
+    "description": "Comfortable wireless headphones with clear audio and long battery life.",
+    "thumbnail": "https://placehold.co/600x600?text=Headphones",
+    "stock": 20
+  },
+  {
+    "id": "p2",
+    "title": "Classic Wrist Watch",
+    "category": "Accessories",
+    "price": 1799,
+    "description": "A minimalist everyday watch with a clean dial and comfortable strap.",
+    "thumbnail": "https://placehold.co/600x600?text=Watch",
+    "stock": 15
+  },
+  {
+    "id": "p3",
+    "title": "Running Shoes",
+    "category": "Fashion",
+    "price": 2999,
+    "description": "Lightweight running shoes designed for everyday comfort.",
+    "thumbnail": "https://placehold.co/600x600?text=Shoes",
+    "stock": 10
+  }
+]
