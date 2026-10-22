@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-
+import "../styles/ProductCard.css"
 function ProductCard({ product }) {
   return (
     <Link className="product-card" to={`/products/${product.id}`}>

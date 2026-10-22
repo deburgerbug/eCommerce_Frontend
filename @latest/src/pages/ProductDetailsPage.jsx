@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getProductById } from "../services/productService";
-
+import { useCart } from "../store/CartContext";
 function ProductDetailsPage() {
   const [product, setProduct] = useState(null)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
   const { id } = useParams();
 
+  const {addToCart} = useCart()
   useEffect(() =>{
     async function loadProduct(){
       setLoading(true);
@@ -28,6 +29,7 @@ function ProductDetailsPage() {
   if(!product) return <p>No product, Ngl</p>
 
   return (
+    <>
     <section>
       <Link to="/" >Back to products</Link>
       <img src={product.thumbnail} alt={product.title} />
@@ -35,9 +37,11 @@ function ProductDetailsPage() {
       <h1>{product.title} </h1>
       <p>{product.description} </p>
       <p>{product.price.toFixed(2)} </p>
+      <button type="button" onClick={() => addToCart(product)}>Add to Cart</button>
       <p>Rating: {product.rating} </p>
       <p>In Stock: {product.stock} </p>
     </section>
+    </>
   ); 
 }
 

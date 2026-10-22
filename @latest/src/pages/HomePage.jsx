@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import ProductCard from "../components/ProductCard";
 import { getProducts } from "../services/productService";
-
+import "../styles/ProductsCatalog.css"
+import ProductFilters from "../components/ProductFilters";
+import ProductList from "../components/ProductList";
+import ProductHeading from "../components/ProductHeading";
 function HomePage() {
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -45,51 +47,25 @@ function HomePage() {
   if (error) {
     return <p role="alert">Error: {error}</p>;
   }
-
+  function handleClearFilters() {
+    setSearchTerm("");
+    setSelectedCategory("all");
+  }
   return (
-    <section className="catalog">
-      <div className="catalog-heading">
-        <div>
-          <p className="eyebrow">Find </p>
-          <h1>All products</h1>
-        </div>
-        <p className="product-count">{filteredProducts.length} products</p>
-      </div>
+    <section className="products">
 
-      <div className="catalog-filters">
-        <label>
-          <span className="visually-hidden">Search products</span>
-          <input
-            type="search"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-        </label>
-        <label>
-          <span className="visually-hidden">Filter by category</span>
-          <select
-            value={selectedCategory}
-            onChange={(event) => setSelectedCategory(event.target.value)}
-          >
-            <option value="all">All categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category.replaceAll("-", " ")}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <ProductHeading count={filteredProducts.length} />
+
+      <ProductFilters searchTerm={searchTerm} onSearchChange={(e) => setSearchTerm(e.target.value)} selectedCategory={selectedCategory}
+        onCategoryChange={(e) => setSelectedCategory(e.target.value)} categories={categories} />
 
       {filteredProducts.length > 0 ? (
-        <div className="product-grid">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <ProductList products={filteredProducts} />
       ) : (
-        <p className="empty-results">No products match your search.</p>
+        <div className="empty-state">
+          <p className="empty-results">No products match your search.</p>
+          <button type="button" onClick={handleClearFilters}>Clear filters</button>
+        </div>
       )}
     </section>
   );
