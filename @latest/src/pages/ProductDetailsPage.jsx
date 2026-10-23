@@ -2,47 +2,113 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getProductById } from "../services/productService";
 import { useCart } from "../store/CartContext";
+import "../styles/ProductDetails.css"
 function ProductDetailsPage() {
   const [product, setProduct] = useState(null)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
+  const [cartMessage, setCartMessage] = useState("");
   const { id } = useParams();
 
-  const {addToCart} = useCart()
-  useEffect(() =>{
-    async function loadProduct(){
+
+  function handleAddToCart(){
+    addToCart(product);
+    setCartMessage(`${product.title} added to cart`)
+  }
+  const { addToCart, cart } = useCart()
+  useEffect(() => {
+    async function loadProduct() {
       setLoading(true);
       setError("")
-        try{
-          setProduct(await getProductById((id)))
-        }catch(err){
-          setError(err.message || "Unable to load product")
-        }finally{
-          setLoading(false)
-        }
+      try {
+        setProduct(await getProductById((id)))
+      } catch (err) {
+        setError(err.message || "Unable to load product")
+      } finally {
+        setLoading(false)
+      }
     }
-   loadProduct()
-  },[id])
+    loadProduct()
+  }, [id])
 
-  if(loading) return <p role="status" >Loading Product...</p>
-  if(error) return <p role="alert">Error: {error} </p>
-  if(!product) return <p>No product, Ngl</p>
-
+  if (loading) return <p role="status" >Loading Product...</p>
+  if (error) return <p role="alert">Error: {error} </p>
+  if (!product) return <p>No product </p>
+  const cartItem = cart.find((item) => item.id === product.id)
   return (
     <>
-    <section>
-      <Link to="/" >Back to products</Link>
-      <img src={product.thumbnail} alt={product.title} />
-      <p>{product.category} </p>
-      <h1>{product.title} </h1>
-      <p>{product.description} </p>
-      <p>{product.price.toFixed(2)} </p>
-      <button type="button" onClick={() => addToCart(product)}>Add to Cart</button>
-      <p>Rating: {product.rating} </p>
-      <p>In Stock: {product.stock} </p>
-    </section>
+      <section className="details" >
+        <Link to="/" className="details-back" > Back </Link>
+        <div className="product-details-layout" >
+          <div className="details-media">
+            <img  className="product-details-image" src={product.thumbnail} alt={product.title} />
+          </div>
+          <div className="details-summary">
+            <p className="details-category">{product.category}</p>
+            <h1>{product.title} </h1>
+            {product.brand && (
+              <p className="details-brand" > by{product.brand}</p>  
+            )}
+            <p className="details-price"> ${product.price.toFixed(2)} </p>
+            <p>{product.description} </p>
+            <p>In Stock: {product.stock} </p>
+            <button type="button" onClick={handleAddToCart}  disabled={product.stock === 0} >{product.stock === 0 ? "Out of stock": "Add to Cart"} </button>
+            {cartItem &&(
+              <Link to="/cart" >View cart ({cartItem.quantity})</Link>
+            )}
+            {cartMessage && <p role="status" >{cartMessage}</p> }
+          </div>
+        </div>
+        <section className="details-info">
+          <h2 id="details-info-title" >Product Information </h2>
+          <dl>
+            <div>
+              <dt>Rating</dt>
+              <dd>{product.rating} / 5 </dd>
+            </div>
+
+            {product.sku && (
+              <div>
+                <dt>SKU</dt>
+                <dd>{product.sku}</dd>
+              </div>
+            )}
+            {product.warrantyInformation && (
+              <div>
+                <dt>WARRANTY</dt>
+                <dd>{product.warrantyInformation} </dd>
+              </div>
+            )}
+            {product.shippingInformation && (
+              <div>
+                <dt>SHIPPING</dt>
+                <dd>{product.shippingInformation}</dd>
+              </div> 
+            )}
+            {product.returnPolicy && (
+              <div>
+                <dt>RETURN POLICY</dt>
+                <dd>{product.returnPolicy}</dd>
+              </div>
+            )}
+          </dl>
+        </section>
+        {product.reviews?.length > 0 && (
+          <section className="details-reviews" >
+            <h2 id="review-title" >Reviews</h2>
+
+            {product.reviews.map((review) => (
+              <article key={`${review.reviewerEmail} -${review.date}` }>
+                <h3>{review.reviewerName}</h3>
+                <p>{review.rating}</p>
+                <p>{review.comment}</p>
+              </article>
+            ))}
+          </section>
+        )}
+      </section>
     </>
-  ); 
+  );
 }
 
 export default ProductDetailsPage;

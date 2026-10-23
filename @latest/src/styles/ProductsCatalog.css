@@ -26,7 +26,6 @@
   margin-bottom: 1.5rem;
 }
 
-.products-filters input,
 .products-filters select {
   background: white;
   border: 1px solid #cbd5e1;
@@ -49,14 +48,14 @@
   text-align: center;
 }
 
-.products-filters input,
+
 .products-filters select {
   width: 12rem;
   box-sizing: border-box;
 }
 
-.products-filters select:focus-visible,
-.products-filters input:focus-visible {
+.products-filters select:focus-visible
+{
   border-color: #2563e6;
   outline: 2px solid #2563e6;
   outline-offset: 2px;
@@ -82,7 +81,6 @@
     flex-direction: column;
   }
 
-  .products-filters input,
   .products-filters select {
     width: 100%;
   }

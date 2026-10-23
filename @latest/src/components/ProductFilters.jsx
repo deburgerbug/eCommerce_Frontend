@@ -1,10 +1,7 @@
-function ProductFilters({searchTerm, onSearchChange, categories, selectedCategory, onCategoryChange}){
+function ProductFilters({ categories, selectedCategory, onCategoryChange}){
     return (
         <div className="products-filters">
-            <label>
-                <span className="visually-hidden">Search Products </span>
-                <input type="text" placeholder="search" value={searchTerm} onChange={onSearchChange} />
-            </label>
+           
             <label>
                 <span className="visually-hidden">Filter by category</span>
                 <select value={selectedCategory} onChange={onCategoryChange}>

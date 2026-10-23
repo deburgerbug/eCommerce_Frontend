@@ -11,6 +11,7 @@ function CartPage(){
             <h1>Cart</h1>
             {cart.map((item) =>(
                 <div key={item.id} >
+                    <img  src={item.img} alt={item.title} style={{width: "200px"}} />
                     <h2>{item.title}</h2>
                     <p>Price ${item.price.toFixed(2)}</p>
                     <div> <button type="button" onClick={()=>decreaseQuantity(item.id)} aria-label={`Decrease the count of ${item.title}`} >-</button> 

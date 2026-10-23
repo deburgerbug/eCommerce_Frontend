@@ -1,7 +1,6 @@
 import { createContext, useContext, useState } from "react";
 
 const CartContext = createContext(null);
-
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
 
@@ -47,7 +46,7 @@ export function useCart() {
   const context = useContext(CartContext);
 
   if (context === null) {
-    throw new Error("useCart used within a CartProvider")
+    throw new Error("useCart must be used within a CartProvider")
   }
   return context;
 }

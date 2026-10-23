@@ -4,13 +4,15 @@ import "../styles/ProductsCatalog.css"
 import ProductFilters from "../components/ProductFilters";
 import ProductList from "../components/ProductList";
 import ProductHeading from "../components/ProductHeading";
+import { useSearchParams } from "react-router-dom";
 function HomePage() {
   const [products, setProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const searchTerm = searchParams.get("search") ?? ""
   useEffect(() => {
     async function loadProducts() {
       try {
@@ -47,17 +49,21 @@ function HomePage() {
   if (error) {
     return <p role="alert">Error: {error}</p>;
   }
+
   function handleClearFilters() {
-    setSearchTerm("");
-    setSelectedCategory("all");
+    setSearchParams((current)=> {
+      const next = new URLSearchParams(current);
+      next.delete("search");
+      return next;
+    })
+    setSelectedCategory("all")
   }
   return (
     <section className="products">
 
       <ProductHeading count={filteredProducts.length} />
 
-      <ProductFilters searchTerm={searchTerm} onSearchChange={(e) => setSearchTerm(e.target.value)} selectedCategory={selectedCategory}
-        onCategoryChange={(e) => setSelectedCategory(e.target.value)} categories={categories} />
+      <ProductFilters  selectedCategory={selectedCategory} onCategoryChange={(e) => setSelectedCategory(e.target.value)} categories={categories} />
 
       {filteredProducts.length > 0 ? (
         <ProductList products={filteredProducts} />
@@ -69,6 +75,5 @@ function HomePage() {
       )}
     </section>
   );
-}
-
+}  
 export default HomePage;

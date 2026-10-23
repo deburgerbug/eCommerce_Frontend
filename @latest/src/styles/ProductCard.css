@@ -13,7 +13,7 @@
 
 .product-card:hover,
 .product-card:focus-visible {
-    box-shadow: 0 8px 24px rgb(15 23 42 / 10%);
+    box-shadow: 0 8px 24px rgba(36, 87, 63, 0.798);
     transform: translateY(-2px);
 }
 .product-card:focus-visible {
@@ -27,9 +27,7 @@
     padding: 0.75rem;
     width: 100%;
 }
-.product-card img:hover{
-    object-fit: cover;
-}
+
 .product-card-content{
     display: grid;
     gap: 0.5rem;
@@ -38,7 +36,7 @@
 }
 
 .product-category{
-    color: #64748b;
+    color: rgb(97, 156, 20);
     font-size:  0.8rem;
     text-transform: capitalize;
 }
@@ -54,6 +52,6 @@
 }
 @media (max-width:425px) {
       .product-card{
-         width: 160px;
+        width: 150px;
       }
 }
