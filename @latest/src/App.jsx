@@ -4,9 +4,13 @@ import OrdersPage from "./pages/OrdersPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import Navbar from "./components/Navbar";
 import { CartProvider } from "./store/CartContext";
+import {AuthProvider} from "./store/AuthContext"
 import CartPage from "./pages/CartPage";
+import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
 function App() {
   return (
+    <AuthProvider>
     <CartProvider>
       <BrowserRouter>
         <Routes>
@@ -16,11 +20,14 @@ function App() {
             <Route path="products/:id" element={<ProductDetailsPage />} />
             <Route path="orders" element={<OrdersPage />} />
             <Route path="cart" element={<CartPage/>}   />
+            <Route path="register" element={<RegisterPage />} />
+            <Route path="login" element={<LoginPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>
     </CartProvider>
+    </AuthProvider>
   );
 }
 

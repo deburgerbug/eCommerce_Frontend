@@ -1,28 +1,36 @@
 import { useCart } from "../store/CartContext";
-
+import "../styles/Cart.css"
 function CartPage(){
     const {cart, removeFromCart, decreaseQuantity, increaseQuantity} = useCart();
 
+    const cartTotal = cart.reduce(
+        (total, item) => total + item.price * item.quantity, 0);
     if(cart.length === 0){
         return <p> Cart is empty.</p>
     }
     return (
-        <section>
-            <h1>Cart</h1>
-            {cart.map((item) =>(
-                <div key={item.id} >
-                    <img  src={item.img} alt={item.title} style={{width: "200px"}} />
-                    <h2>{item.title}</h2>
-                    <p>Price ${item.price.toFixed(2)}</p>
-                    <div> <button type="button" onClick={()=>decreaseQuantity(item.id)} aria-label={`Decrease the count of ${item.title}`} >-</button> 
-                    <span>{item.quantity}</span>
-                    <button type="button" onClick={() => increaseQuantity(item.id)} aria-label={`Increase the count of ${item.title}`} >+</button>
-                    <button type="button" onClick={()=> removeFromCart(item.id)} aria-label={`Remove item from the cart ${item.id}`}  >Remove</button>
-                    </div>
-                    
-                </div>
-                
-            ))}
+        <section className="cart" >
+            <h1> Cart</h1>
+            <div className="cart-items">
+                {cart.map((item) =>(
+                    <article className="cart-item" key={item.id}>
+                        <img  src={item.thumbnail} alt={item.title} />
+                        <div className="cart-item-info" >
+                            <h2>{item.title}</h2>
+                            <p>{item.price.toFixed(2)}</p>
+                            <p>Quantity: {item.quantity}</p>
+                        </div>
+
+                        <div className="cart-item-actions" >
+                            <button type="button" onClick={()=>decreaseQuantity(item.id)}> - </button>
+                            <span>{item.quantity}</span>
+                            <button type="button" onClick={()=>increaseQuantity(item.id)} > + </button>
+                            <button type="button"  onClick={() =>removeFromCart(item.id)} >Remove</button>
+                        </div>
+                    </article>
+                ))}
+            </div>
+            <p className="cart-total">Total: ${cartTotal.toFixed(2)}</p>
         </section>
     )
 }

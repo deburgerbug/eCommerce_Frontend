@@ -1,9 +1,10 @@
 import { Link, NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import "../styles/Navbar.css";
 import { useCart } from "../store/CartContext";
-
+import { useAuth } from "../store/AuthContext";
 function Navbar() {
   const { cart } = useCart();
+  const { user, logout } = useAuth();
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -37,6 +38,18 @@ function Navbar() {
           <NavLink to="/" end>Home</NavLink>
           <NavLink to="/orders">Orders</NavLink>
           <NavLink to="/cart">Cart ({cartCount})</NavLink>
+          {user ? (
+            <>
+              <span className="navbar-user" >Hey, {user.name.split(" ")[0]}</span>
+              <button className="navbar-logout" onClick={logout}>Logout</button>
+            </>
+          ):
+          (
+            <>
+            <NavLink to="login" >Login</NavLink>
+            <NavLink to="register">Register</NavLink>
+            </>
+          )}
         </nav>
     </header>
   );
