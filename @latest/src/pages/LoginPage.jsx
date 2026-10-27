@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../store/AuthContext"
 import "../styles/Navbar.css"
  function LoginPage() {
+    const location = useLocation()
     const { login } = useAuth()
     const navigate = useNavigate()
     const [email, setEmail] = useState("")
@@ -10,6 +11,7 @@ import "../styles/Navbar.css"
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
+    const goBackTo = location.state?.from?.pathname || "/"
     async function handleSubmit(e) {
         e.preventDefault()
         setError("")
@@ -21,7 +23,7 @@ import "../styles/Navbar.css"
         setLoading(true);
         try{
             await login(email, password)
-            navigate("/", {replace: true});
+            navigate(goBackTo, {replace: true});
         }catch(err){
             setError(err.message)
             setLoading(false)
@@ -33,26 +35,10 @@ import "../styles/Navbar.css"
       <h1>Log in</h1>
 
       <form className="auth-form" onSubmit={handleSubmit}>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
-
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
+        <label>  Email <input type="email" value={email}  onChange={(e) => setEmail(e.target.value)} /> </label>
+        <label> Password <input type="password"  value={password} onChange={(e) => setPassword(e.target.value)}/> </label>
 
         {error && <p className="auth-error">{error}</p>}
-
         <button type="submit" disabled={loading}>
           {loading ? "Logging in..." : "Log in"}
         </button>

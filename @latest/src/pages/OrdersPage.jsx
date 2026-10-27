@@ -1,10 +1,45 @@
+import { Link } from "react-router-dom"
+import { useAuth } from "../store/AuthContext"
+import { loadOrders } from "../services/orderService"
+
 function OrdersPage() {
+  const { user } = useAuth()
+  const orders = loadOrders(user)
+
+  if (orders.length === 0) {
+    return (
+      <section>
+        <h1>Orders</h1>
+        <p>No orders yet.</p>
+        <Link to="/">Start shopping</Link>
+      </section>
+    )
+  }
+
   return (
-    <section>
-      <h1>Orders</h1>
-      <p>Cart Items hereeeeeeee</p>
+    <section  className="orders" >
+      <div className="orders-info" >
+        <h1 className="orders-heading" >Orders</h1>
+      </div>
+      {orders.map((order) => (
+        <article key={order.id}>
+          <h2 className="orders-id" >Order #{order.id}</h2>
+          <p>{new Date(order.date).toLocaleString()} · {order.paymentMethod}</p>
+          {order.address &&(
+            <p>Ship to:{order.address.fullName}, {order.address.street} {order.address.city} - {order.address.pinCode}  </p>
+          )} 
+          <ul>
+            {order.items.map((item) => (
+              <li key={item.id}>
+                {item.title} × {item.quantity}
+              </li>
+            ))}
+          </ul>
+          <p>Total: ${order.total.toFixed(2)}</p>
+        </article>
+      ))}
     </section>
-  );
+  )
 }
 
-export default OrdersPage;
+export default OrdersPage

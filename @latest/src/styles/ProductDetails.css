@@ -102,6 +102,13 @@
 .details-reviews p{
     margin: 0.25rem 0;
 }
+.details-actions{ display:flex; flex-wrap:wrap; gap:0.75rem; margin:1rem 0; }
+.details-actions button{ align-items:center; display:inline-flex; gap:0.5rem;
+  border:1px solid #e2e8f0; border-radius:0.5rem; background:white; cursor:pointer;
+  font:inherit; padding:0.6rem 1rem; }
+.details-actions .btn-primary{ background:#2563eb; border-color:#2563eb; color:white; }
+.details-actions .btn-primary:disabled{ background:#94a3b8; border-color:#94a3b8; cursor:not-allowed; }
+.details-actions .btn-wish.is-saved{ color:#dc2626; border-color:#fecaca; }
 
 @media (max-width: 600px){
     .product-details-layout{

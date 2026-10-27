@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { getProducts } from "../services/productService";
-import "../styles/ProductsCatalog.css"
 import ProductFilters from "../components/ProductFilters";
 import ProductList from "../components/ProductList";
 import ProductHeading from "../components/ProductHeading";
-import { useSearchParams } from "react-router-dom";
-function HomePage() {
+import "../styles/ProductsCatalog.css";
+
+function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const searchTerm = searchParams.get("search") ?? ""
+  const searchTerm = searchParams.get("search") ?? "";
+  const selectedCategory = searchParams.get("category") ?? "all";
+
   useEffect(() => {
     async function loadProducts() {
       try {
@@ -23,7 +25,6 @@ function HomePage() {
         setLoading(false);
       }
     }
-
     loadProducts();
   }, []);
 
@@ -38,33 +39,34 @@ function HomePage() {
       .includes(searchTerm.trim().toLowerCase());
     const matchesCategory =
       selectedCategory === "all" || product.category === selectedCategory;
-
     return matchesSearch && matchesCategory;
   });
 
-  if (loading) {
-    return <p role="status">Loading products...</p>;
-  }
-
-  if (error) {
-    return <p role="alert">Error: {error}</p>;
+  function handleCategoryChange(event) {
+    const value = event.target.value;
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (value === "all") next.delete("category");
+      else next.set("category", value);
+      return next;
+    });
   }
 
   function handleClearFilters() {
-    setSearchParams((current)=> {
-      const next = new URLSearchParams(current);
-      next.delete("search");
-      return next;
-    })
-    setSelectedCategory("all")
+    setSearchParams({});
   }
+
+  if (loading) return <p role="status">Loading products...</p>;
+  if (error) return <p role="alert">Error: {error}</p>;
+
   return (
     <section className="products">
-
       <ProductHeading count={filteredProducts.length} />
-
-      <ProductFilters  selectedCategory={selectedCategory} onCategoryChange={(e) => setSelectedCategory(e.target.value)} categories={categories} />
-
+      <ProductFilters
+        selectedCategory={selectedCategory}
+        onCategoryChange={handleCategoryChange}
+        categories={categories}
+      />
       {filteredProducts.length > 0 ? (
         <ProductList products={filteredProducts} />
       ) : (
@@ -75,5 +77,6 @@ function HomePage() {
       )}
     </section>
   );
-}  
-export default HomePage;
+}
+
+export default ProductsPage;

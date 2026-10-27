@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getProductById } from "../services/productService";
 import { useCart } from "../store/CartContext";
+import { useWishlist } from "../store/WishlistContext";
+import { FiShoppingCart } from "react-icons/fi"
+import { FaHeart, FaRegHeart } from "react-icons/fa"
 import "../styles/ProductDetails.css"
 function ProductDetailsPage() {
   const [product, setProduct] = useState(null)
@@ -10,8 +13,8 @@ function ProductDetailsPage() {
   const [cartMessage, setCartMessage] = useState("");
   const { id } = useParams();
 
-
-  function handleAddToCart(){
+  const { isInWishlist, toggleWishlist } = useWishlist()
+  function handleAddToCart() {
     const added = addToCart(product);
     setCartMessage(added ? `${product.title} added to cart` : `Only ${product.stock} in stock`)
   }
@@ -41,7 +44,7 @@ function ProductDetailsPage() {
         <Link to="/" className="details-back" > Back </Link>
         <div className="product-details-layout" >
           <div className="details-media">
-            <img  className="product-details-image" src={product.thumbnail} alt={product.title} />
+            <img className="product-details-image" src={product.thumbnail} alt={product.title} />
           </div>
           <div className="details-summary">
             <p className="details-category">{product.category}</p>
@@ -52,11 +55,24 @@ function ProductDetailsPage() {
             <p className="details-price"> ${product.price.toFixed(2)} </p>
             <p>{product.description} </p>
             <p>In Stock: {product.stock} </p>
-            <button type="button" onClick={handleAddToCart}  disabled={product.stock === 0 || (cartItem?.quantity ?? 0) >= product.stock} >{product.stock === 0 ? "Out of stock": "Add to Cart"} </button>
-            {cartItem &&(
+            <div className="details-actions">
+              <button type="button" className="btn-primary" onClick={handleAddToCart}
+                disabled={product.stock === 0 || (cartItem?.quantity ?? 0) >= product.stock}>
+                <FiShoppingCart aria-hidden="true" />
+                {product.stock === 0 ? "Out of stock" : "Add to cart"}
+              </button>
+              <button type="button"
+                className={`btn-wish ${isInWishlist(product.id) ? "is-saved" : ""}`}
+                onClick={() => toggleWishlist(product)}
+                aria-pressed={isInWishlist(product.id)}>
+                {isInWishlist(product.id) ? <FaHeart aria-hidden="true" /> : <FaRegHeart aria-hidden="true" />}
+                {isInWishlist(product.id) ? "Saved" : "Save"}
+              </button>
+            </div>
+            {cartItem && (
               <Link to="/cart" >View cart ({cartItem.quantity})</Link>
             )}
-            {cartMessage && <p role="status" >{cartMessage}</p> }
+            {cartMessage && <p role="status" >{cartMessage}</p>}
           </div>
         </div>
         <section className="details-info">
@@ -83,7 +99,7 @@ function ProductDetailsPage() {
               <div>
                 <dt>SHIPPING</dt>
                 <dd>{product.shippingInformation}</dd>
-              </div> 
+              </div>
             )}
             {product.returnPolicy && (
               <div>
@@ -97,8 +113,8 @@ function ProductDetailsPage() {
           <section className="details-reviews" >
             <h2 id="review-title" >Reviews</h2>
 
-            {product.reviews.map((review) => (
-              <article key={`${review.reviewerEmail} -${review.date}` }>
+            {product.reviews.map((review, index) => (
+              <article key={`${review.reviewerEmail} -${review.date} - ${index}`}>
                 <h3>{review.reviewerName}</h3>
                 <p>{review.rating}</p>
                 <p>{review.comment}</p>
