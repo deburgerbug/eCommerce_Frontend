@@ -12,8 +12,8 @@ function ProductDetailsPage() {
 
 
   function handleAddToCart(){
-    addToCart(product);
-    setCartMessage(`${product.title} added to cart`)
+    const added = addToCart(product);
+    setCartMessage(added ? `${product.title} added to cart` : `Only ${product.stock} in stock`)
   }
   const { addToCart, cart } = useCart()
   useEffect(() => {
@@ -47,12 +47,12 @@ function ProductDetailsPage() {
             <p className="details-category">{product.category}</p>
             <h1>{product.title} </h1>
             {product.brand && (
-              <p className="details-brand" > by{product.brand}</p>  
+              <p className="details-brand" > by {product.brand}</p>
             )}
             <p className="details-price"> ${product.price.toFixed(2)} </p>
             <p>{product.description} </p>
             <p>In Stock: {product.stock} </p>
-            <button type="button" onClick={handleAddToCart}  disabled={product.stock === 0} >{product.stock === 0 ? "Out of stock": "Add to Cart"} </button>
+            <button type="button" onClick={handleAddToCart}  disabled={product.stock === 0 || (cartItem?.quantity ?? 0) >= product.stock} >{product.stock === 0 ? "Out of stock": "Add to Cart"} </button>
             {cartItem &&(
               <Link to="/cart" >View cart ({cartItem.quantity})</Link>
             )}

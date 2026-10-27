@@ -30,8 +30,8 @@ function saveSession(userId){
 }
 
 export function validateRegistration(name, email, password){
-    if(name.trim().length <2) {
-        return "Name must be more than 2 characters"
+    if(name.trim().length < 2) {
+        return "Name must be at least 2 characters"
     }
     if(!email.includes('@') || !email.includes(".")) {
         return "Enter a valid email address"
@@ -58,21 +58,12 @@ export async function registerUser(name, email, password){
     const salt = makeSalt();
     const passwordHash = await hashPassword(password, salt);
 
-    let biggestId = 0;
-    console.log("users.....",users)
-    for(const user of users){
+    const nextId = users.reduce((maxId, user) => Math.max(maxId, user.id), 0) + 1;
 
-        if(typeof  user.id === "number" && user.id >= biggestId ){
-            console.log("I am inside..........")
-            biggestId = user.id
-            console.log("biggestId...." , biggestId)
-            biggestId++
-        }
-    }
-  
     const newUser = {
-        id: biggestId,
+        id: nextId,
         name: name.trim(),
+        salt:salt,
         email: cleanEmail,
         passwordHash: passwordHash
     }
@@ -89,15 +80,14 @@ export async function loginUser(email,password){
     const users= readJSON(USERS_KEY, [])
 
     const user = users.find((u) => u.email === cleanEmail)
-    if(!user){
-        throw new Error(" No user found")
-    }
+    const typedHash = user ? await hashPassword(password, user.salt) : null;
 
-    const typedHash = await hashPassword(password, user.salt);
-
-    if(typedHash !== user.passwordHash){
+    if(!user || typedHash !== user.passwordHash){
         throw new Error("Invalid email or password.")
     }
+
+    saveSession(user.id)
+    return createUser(user)
 }
 
 export async function logoutUser(){

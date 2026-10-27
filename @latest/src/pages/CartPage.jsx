@@ -24,7 +24,7 @@ function CartPage(){
                         <div className="cart-item-actions" >
                             <button type="button" onClick={()=>decreaseQuantity(item.id)}> - </button>
                             <span>{item.quantity}</span>
-                            <button type="button" onClick={()=>increaseQuantity(item.id)} > + </button>
+                            <button type="button" onClick={()=>increaseQuantity(item.id)} disabled={item.quantity >= item.stock} > + </button>
                             <button type="button"  onClick={() =>removeFromCart(item.id)} >Remove</button>
                         </div>
                     </article>

@@ -1,28 +1,27 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../store/AuthContext"
-import "../styles/navbar.css"
+import "../styles/Navbar.css"
  function LoginPage() {
     const { login } = useAuth()
+    const navigate = useNavigate()
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
-    let goBackTo = "/"
-
     async function handleSubmit(e) {
         e.preventDefault()
-        setError(false)
+        setError("")
 
-        if (!email.trim() === "" || !password === "") {
-            setError("email and passowrd is required")
+        if (!email.trim() || !password) {
+            setError("Email and password are required")
             return;
         }
         setLoading(true);
         try{
             await login(email, password)
-            Navigate(goBackTo, {replace: true});
+            navigate("/", {replace: true});
         }catch(err){
             setError(err.message)
             setLoading(false)

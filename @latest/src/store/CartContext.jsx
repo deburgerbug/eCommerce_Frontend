@@ -22,6 +22,9 @@ export function CartProvider({ children }) {
     const existingItem = cart.find((item) => item.id === product.id)
 
     if(existingItem){
+      if(existingItem.quantity >= product.stock){
+        return false
+      }
       const newCart = cart.map((item)=> {
         if(item.id === product.id){
           return {...item, quantity: item.quantity + 1}
@@ -35,6 +38,7 @@ export function CartProvider({ children }) {
       };
       changeCart([...cart, newItem])
     }
+    return true
   }
   function removeFromCart(productId) {
     const newCart = cart.filter((item) => item.id !== productId)
@@ -42,27 +46,18 @@ export function CartProvider({ children }) {
   }
 
   function increaseQuantity(productId) {
-    const newCart = [];
-
-    for (const item of cart){
-      if(item.id !== productId){
-        newCart.push(item);
-      }else if (item.quantity > 1) {
-        newCart.push({...item, quantity: item.quantity + 1})
-      }
-      changeCart(newCart);
-    }
+    changeCart(cart.map((item) =>
+      item.id === productId && item.quantity < item.stock
+        ? {...item, quantity: item.quantity + 1}
+        : item
+    ))
   }
   function decreaseQuantity(productId) {
-    const newCart = [];
-
-    for (const item of cart) {
-      if(item.id !== productId) {
-        newCart.push(item);
-      }else if (item.quantity > 1){
-        newCart.push({...item ,quantity: item.quantity - 1})
-      }
-    }
+    changeCart(
+      cart
+        .map((item) => item.id === productId ? {...item, quantity: item.quantity - 1} : item)
+        .filter((item) => item.quantity > 0)
+    )
   }
   function clearCart(){
     changeCart([])
