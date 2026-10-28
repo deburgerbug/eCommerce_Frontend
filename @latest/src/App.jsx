@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import ProductsPage from "./pages/ProductsPage";
 import OrdersPage from "./pages/OrdersPage";
@@ -13,6 +13,7 @@ import WishListPage from "./pages/WishListPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CheckoutPage from "./pages/CheckoutPage";
 import { WishlistProvider } from "./store/WishlistContext";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -45,12 +46,15 @@ function App() {
 }
 
 function AppLayout() {
+  const { pathname } = useLocation();
+
   return (
     <>
       <Navbar />
       <main className="page">
         <Outlet />
       </main>
+      {pathname === "/" && <Footer />}
     </>
   );
 }

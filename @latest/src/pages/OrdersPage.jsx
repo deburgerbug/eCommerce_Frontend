@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { useAuth } from "../store/AuthContext"
 import { loadOrders } from "../services/orderService"
+import "../styles/Orders.css"
 
 function OrdersPage() {
   const { user } = useAuth()
@@ -22,20 +23,20 @@ function OrdersPage() {
         <h1 className="orders-heading" >Orders</h1>
       </div>
       {orders.map((order) => (
-        <article key={order.id}>
+        <article className="order-card" key={order.id}>
           <h2 className="orders-id" >Order #{order.id}</h2>
-          <p>{new Date(order.date).toLocaleString()} · {order.paymentMethod}</p>
+          <p className="order-meta">{new Date(order.date).toLocaleString()} · {order.paymentMethod}</p>
           {order.address &&(
-            <p>Ship to:{order.address.fullName}, {order.address.street} {order.address.city} - {order.address.pinCode}  </p>
+            <p className="order-address">Ship to:{order.address.fullName}, {order.address.street} {order.address.city} - {order.address.pinCode}  </p>
           )} 
-          <ul>
+          <ul className="order-items">
             {order.items.map((item) => (
               <li key={item.id}>
                 {item.title} × {item.quantity}
               </li>
             ))}
           </ul>
-          <p>Total: ${order.total.toFixed(2)}</p>
+          <p className="order-total">Total: ${order.total.toFixed(2)}</p>
         </article>
       ))}
     </section>

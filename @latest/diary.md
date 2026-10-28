@@ -23,3 +23,14 @@ I will create a separate products page on navbar, which will show All the produc
 
 On homepage, after cleanup, we will show the products by rating with title(popular products title), and not all products only 10-15 products only.
 
+
+## Date- 28/10/2026
+
+## Task 1 
+
+Make Image slider with 2 images , reference to  "https://preview.themewagon.com/freshcart/#!"
+
+I did - I imported 2 images in assets folder, from that i have to make a slider which only present there as slider slider will be our component on HomePage. 
+Approch 1- We can use the index of image to define curent index on page,
+
+## Task 2

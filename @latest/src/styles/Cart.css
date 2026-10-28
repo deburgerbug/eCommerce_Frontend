@@ -37,13 +37,12 @@
     flex-wrap: wrap;
     gap: 0.5rem;
 }
-.icon-btn{ align-items:center; background:white; border:1px solid #e2e8f0;
-  border-radius:0.5rem; cursor:pointer; display:inline-flex; height:2rem;
-  justify-content:center; width:2rem; }
-.icon-btn:hover:not(:disabled){ background:#f1f5f9; }
-.icon-btn:disabled{ cursor:not-allowed; opacity:0.4; }
-.icon-btn-danger:hover:not(:disabled){ background:#fef2f2; border-color:#fecaca; color:#b91c1c; }
-.cart-qty{ min-width:1.5rem; text-align:center; font-weight:600; }
+
+.cart-qty {
+    font-weight: 600;
+    min-width: 1.5rem;
+    text-align: center;
+}
 
 @media (max-width: 560px){
     .cart-item{

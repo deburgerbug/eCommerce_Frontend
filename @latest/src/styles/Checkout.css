@@ -1,0 +1,109 @@
+.checkout h1 {
+    margin: 0.75rem 0 1.25rem;
+}
+
+.checkout-back {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.checkout-layout {
+    align-items: start;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+}
+
+.checkout-form {
+    display: grid;
+    gap: 0.9rem;
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.checkout-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    grid-column: 2;
+    grid-row: 1;
+    padding: 1.25rem;
+}
+
+.checkout h2 {
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem;
+}
+
+.checkout-summary ul {
+    display: grid;
+    gap: 0.6rem;
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+.checkout-total {
+    border-top: 1px solid #e2e8f0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    padding-top: 0.75rem;
+}
+
+.checkout-form label {
+    display: grid;
+    gap: 0.3rem;
+}
+
+.checkout-form input[type="text"],
+.checkout-form input[type="tel"] {
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    box-sizing: border-box;
+    font: inherit;
+    padding: 0.6rem 0.75rem;
+    width: 100%;
+}
+
+.checkout-form input:focus-visible {
+    border-color: #2563eb;
+    outline: 2px solid #bfdbfe;
+}
+
+.checkout-form .checkout-payment {
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.7rem 0.9rem;
+}
+
+.checkout-submit {
+    background: #2563eb;
+    border: none;
+    border-radius: 0.5rem;
+    color: white;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+}
+
+.checkout-submit:hover {
+    background: #1d4ed8;
+}
+
+@media (max-width: 800px) {
+    .checkout-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .checkout-summary,
+    .checkout-form {
+        grid-column: 1;
+        grid-row: auto;
+    }
+}

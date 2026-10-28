@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import CategoryCarousel from "../components/CategoryCarousel";
 import ProductList from "../components/ProductList";
 import { getProducts } from "../services/productService";
+import HeroSlider from "../components/HeroSlider";
 import "../styles/ProductsCatalog.css";
 
 function HomePage() {
@@ -56,6 +57,7 @@ function HomePage() {
 
   return (
     <section className="products">
+      <HeroSlider />
       <CategoryCarousel
         categories={categories}
         productCount={products.length}

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { useCart } from "../store/CartContext"
 import { useAuth } from "../store/AuthContext"
 import { saveOrder } from "../services/orderService.js"
+import "../styles/Checkout.css"
 const PAYMENT_METHODS = [
   { id: 1, label: "UPI", summary: "Pay using any UPI" },
   { id: 2, label: "Card", summary: "Pay with any Card" },
@@ -61,10 +62,13 @@ function CheckoutPage() {
   }
 
   return (
-    <section>
-      <Link to="/">Back to products</Link>
+    <section className="checkout">
+      <Link to="/" className="checkout-back">Back to products</Link>
       <h1>Checkout</h1>
 
+      <div className="checkout-layout">
+      <aside className="checkout-summary">
+      <h2>Order summary</h2>
       <ul>
         {cart.map((item) => (
           <li key={item.id}>
@@ -72,24 +76,27 @@ function CheckoutPage() {
           </li>
         ))}
       </ul>
-      <p>Total: ${total.toFixed(2)}</p>
+      <p className="checkout-total">Total: ${total.toFixed(2)}</p>
+      </aside>
 
-
-      <form onSubmit={handlePlaceOrder}>
+      <form className="checkout-form" onSubmit={handlePlaceOrder}>
+        <h2>Shipping address</h2>
         <label>Name<input type="text" name="fullName" required value={address.fullName} onChange={handleAddressChange} /></label>
         <label>Phone<input type="tel" name="phone" required value={address.phone} onChange={handleAddressChange} /></label>
         <label>City<input type="text" name="city" required value={address.city} onChange={handleAddressChange} /></label>
         <label>Street<input type="text" name="street" required value={address.street} onChange={handleAddressChange} /></label>
         <label>Pin-Code<input type="text" name="pinCode" required inputMode="numeric" value={address.pinCode} onChange={handleAddressChange} /></label>
+        <h2>Payment method</h2>
         {PAYMENT_METHODS.map((m) => (
 
-          <label key={m.id}> <input type="radio" name="payment" checked={method === m.id} onChange={() => setMethod(m.id)} />
+          <label key={m.id} className="checkout-payment"> <input type="radio" name="payment" checked={method === m.id} onChange={() => setMethod(m.id)} />
             {m.label} — {m.summary}
           </label>
           
         ))}
-        <button type="submit">Place order</button>
+        <button type="submit" className="checkout-submit">Place order</button>
       </form>
+      </div>
     </section>
   )
 }

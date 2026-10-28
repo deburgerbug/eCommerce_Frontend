@@ -3,22 +3,18 @@ import { Link, useParams } from "react-router-dom";
 import { getProductById } from "../services/productService";
 import { useCart } from "../store/CartContext";
 import { useWishlist } from "../store/WishlistContext";
-import { FiShoppingCart } from "react-icons/fi"
+import { FiShoppingCart, FiPlus, FiMinus } from "react-icons/fi"
 import { FaHeart, FaRegHeart } from "react-icons/fa"
 import "../styles/ProductDetails.css"
 function ProductDetailsPage() {
   const [product, setProduct] = useState(null)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
-  const [cartMessage, setCartMessage] = useState("");
   const { id } = useParams();
 
   const { isInWishlist, toggleWishlist } = useWishlist()
-  function handleAddToCart() {
-    const added = addToCart(product);
-    setCartMessage(added ? `${product.title} added to cart` : `Only ${product.stock} in stock`)
-  }
-  const { addToCart, cart } = useCart()
+  
+  const { addToCart, cart, increaseQuantity, decreaseQuantity } = useCart()
   useEffect(() => {
     async function loadProduct() {
       setLoading(true);
@@ -62,19 +58,32 @@ function ProductDetailsPage() {
               <p className="details-brand" > by {product.brand}</p>
             )}
             <p className="details-price"> ${product.price.toFixed(2)} </p>
-            <p>{product.description} </p>
+            <p>{product.description} </p>)
             <p>In Stock: {product.stock} </p>
-            <div className="details-actions">
-              <button type="button" className="btn-primary" onClick={handleAddToCart}
-                disabled={product.stock === 0 || (cartItem?.quantity ?? 0) >= product.stock}>
-                <FiShoppingCart aria-hidden="true" />
-                {product.stock === 0 ? "Out of stock" : "Add to cart"}
-              </button>
+            <div className="details-actions" >
+              {cartItem ?(
+                <div className="details-quantity" >
+                  <button type="button" className="icon-btn" aria-label={`Decrease quantity of ${product.title}`} onClick={() =>decreaseQuantity(product.id)}>
+                    <FiMinus aria-hidden="true" />
+                  </button> 
+                  <span className="details-quantity-value" aria-level="polite" >{cartItem.quantity}</span>
+                  <button  type="button" aria-label={`Increase the quantity of  ${product.title}`} onClick={()=>increaseQuantity(product.id)} className="icon-btn" >
+                    <FiPlus aria-hidden="true" />
+                  </button>
+                  </div> 
+               ):
+               (
+                <button type="button" className="btn-primary" onClick={() => addToCart(product)} disabled={product.stock===0}>
+                  <FiShoppingCart aria-hidden="true" />
+                  {product.stock === 0 ? "Out of stock": "Add to cart"}
+                </button>
+               )
+              }
             </div>
             {cartItem && (
               <Link to="/cart" >View cart ({cartItem.quantity})</Link>
             )}
-            {cartMessage && <p role="status" >{cartMessage}</p>}
+            
           </div>
         </div>
         <section className="details-info">
