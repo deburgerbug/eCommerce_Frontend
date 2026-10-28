@@ -1,4 +1,300 @@
 
+# Building the Category Carousel and HomePage from First Principles
+
+This is the current guide for understanding and rebuilding the HomePage and category carousel. The implementation is frontend-only: product data comes from DummyJSON, while React derives the homepage content and the browser URL carries the selected catalog category.
+
+## 1. Start with the behavior, not the component
+
+Write down what the user should be able to do before deciding which React hooks to use:
+
+1. Open `/` and see category cards and a short list of popular products.
+2. Scroll the category cards with arrows, touch, or a trackpad.
+3. Let the cards advance automatically; pause the movement while the user is interacting with the carousel.
+4. Choose a category and arrive at `/products?category=category-name`.
+5. On the products page, see products from that category and be able to change the category or search.
+6. Choose “All products” to remove the category restriction.
+
+This list becomes both the design target and the manual test plan. It also reveals that there are two different actions: automatic scrolling changes which cards are visible, while choosing a card changes the selected category and route. Autoplay must not silently change the user's filter.
+
+## 2. Give each file one responsibility
+
+| File | Responsibility |
+| --- | --- |
+| `src/services/productService.js` | Fetch product data from DummyJSON and return the product array. |
+| `src/pages/HomePage.jsx` | Own loading/error/product state; derive category summaries and popular products; assemble the homepage. |
+| `src/components/CategoryCarousel.jsx` | Render category cards and arrows, auto-scroll the track, and navigate when a card is selected. |
+| `src/pages/ProductsPage.jsx` | Read `search` and `category` from the URL, filter products, and render results. |
+| `src/components/ProductFilters.jsx` | Render the catalog's category dropdown. |
+| `src/components/ProductList.jsx` and `ProductCard.jsx` | Render the product collection and each product. |
+| `src/App.jsx` | Map `/` to `HomePage` and `/products` to `ProductsPage`. |
+| `src/styles/ProductsCatalog.css` | Control card dimensions, horizontal overflow, responsive behavior, and visual states. |
+
+When a behavior is wrong, start at the file that owns that behavior. For example, wrong category counts belong to the summary derivation in `HomePage`; wrong filtering belongs to `ProductsPage`; wrong spacing belongs to CSS.
+
+## 3. Understand the data before rendering it
+
+`getProducts()` requests all products with `?limit=0`. Each product includes fields such as `id`, `title`, `category`, `thumbnail`, `price`, and `rating`.
+
+The homepage needs category cards, not just category strings. A useful summary shape is:
+
+```js
+{
+  name: "beauty",
+  label: "beauty",
+  count: 8,
+  image: "https://example.test/representative-product.jpg"
+}
+```
+
+The first product encountered in a category can supply its representative image. Each later product in that category increments the count. A `Map` is useful because its keys make category names unique:
+
+```text
+for each product:
+  look up product.category in categoriesByName
+  if found:
+    increment its count
+  otherwise:
+    create a summary using the product title/category/thumbnail
+sort the summaries by name for a predictable order
+```
+
+The “All products” card is a special option. It uses the total number of loaded products, and selecting it means there is no category restriction. Do not mix it into the product data itself; it is a navigation choice, not a real product category.
+
+Popular products are also derived from the same fetched array:
+
+```text
+copy the products array
+sort the copy by rating, highest first
+take the first 12 products
+```
+
+Copy before sorting. `sort()` changes the array it is called on, and React state should not be mutated. The current implementation does this with `[...products].sort(...).slice(0, 12)`.
+
+## 4. Trace the data and interaction flow
+
+```mermaid
+flowchart TD
+  A[productService: fetch DummyJSON products] --> B[HomePage: store products]
+  B --> C[derive category summaries and counts]
+  B --> D[sort by rating and take 12 popular products]
+  C --> E[CategoryCarousel receives category cards]
+  D --> F[ProductList renders popular products]
+  E -->|timer or arrow| G[scroll visible card track]
+  E -->|card click| H[navigate to /products?category=name]
+  H --> I[ProductsPage reads URL search params]
+  I --> J[filter products by category and search]
+  J --> K[ProductList renders matching products]
+```
+
+The carousel does not filter the homepage's popular products. Its job is to help a user choose a category and navigate to the full catalog. `ProductsPage` owns catalog filtering. The category dropdown and carousel both lead to the same URL state, so the URL remains the single source of truth for the catalog selection.
+
+## 5. Pseudocode: build it in a useful order
+
+### Step A: Load the source data in the page
+
+```text
+products = []
+loading = true
+error = empty
+
+when HomePage mounts:
+  request products from productService
+  on success: store the returned products
+  on failure: store an error message
+  in either case: set loading to false
+
+while loading: render a status message
+if error: render an alert
+otherwise: render the page
+```
+
+Keep the network request in the service/page boundary. The carousel should not fetch products itself because the parent already has the data needed to build its cards.
+
+### Step B: Derive category summaries and popular products
+
+```text
+categories = group products by category
+for each group:
+  create { name, label, count, image }
+sort categories by name
+
+popularProducts = a copied products array sorted by rating descending
+popularProducts = first 12 entries
+```
+
+These are derived values. They depend on `products`, so they do not need independent state or setters. `useMemo` can avoid repeating the calculations on unrelated renders; it is an optimization, not a requirement for correctness.
+
+### Step C: Pass data down to the carousel
+
+```text
+HomePage passes:
+  categories
+  total product count
+  image for the All products card
+
+CategoryCarousel:
+  creates the All products option
+  maps options to buttons
+  displays image, label, and count
+```
+
+The child receives data through props. It should not import `HomePage` or reach into the parent's state.
+
+### Step D: Handle selection as navigation
+
+```text
+when a category card is clicked:
+  copy the current URL search parameters
+  if the choice is All:
+    remove the category parameter
+  otherwise:
+    set category to the chosen category name
+  navigate to /products with those parameters
+```
+
+This is different from keeping a separate `selectedCategory` state in `HomePage`. In the current design, selection belongs to the catalog URL. `CategoryCarousel` reads that URL value to highlight the matching card when applicable, while `ProductsPage` uses it to filter products.
+
+### Step E: Add horizontal scrolling and autoplay
+
+```text
+manual arrow:
+  use a ref to find the scrolling track
+  scroll by roughly one card with smooth behavior
+
+autoplay effect:
+  if there are fewer than two cards or interaction is paused:
+    do not start a timer
+  otherwise:
+    every 4 seconds, scroll by one card
+    if already at the end, scroll back to the beginning
+  when the effect is cleaned up:
+    clear the interval
+```
+
+The interval only moves the track. It must not select a category or navigate. Pause while the pointer is over the carousel or keyboard focus is inside it. Cleaning up the interval prevents timers from continuing after the component unmounts or its effect is restarted.
+
+### Step F: Style the card track
+
+```text
+carousel wrapper = arrows + horizontally scrollable track
+track = flex row, fixed-size non-shrinking cards, overflow-x auto
+card = image, category label, optional product count
+selected card = visible selected treatment
+small viewport = smaller fixed card width, same horizontal scroll
+```
+
+CSS controls appearance and responsive layout; React controls data, navigation, and timer behavior. Use `scroll-snap` to make manual scrolling settle cleanly on cards. Keep the card dimensions stable so text or hover states do not resize the track.
+
+### Step G: Verify the route and catalog behavior
+
+1. Confirm `App.jsx` renders `HomePage` at `/` and `ProductsPage` at `/products`.
+2. Click a category and inspect the address bar for `?category=...`.
+3. Confirm `ProductsPage` reads that parameter and filters the product array.
+4. Change the category using the dropdown and confirm the URL and results update.
+5. Choose All products and confirm the category parameter is removed.
+
+## 6. React concepts used here
+
+### Components and composition
+
+A component is a function that returns UI. `HomePage` composes smaller components such as `CategoryCarousel` and `ProductList`. Splitting by responsibility makes each part easier to test and change without making one component own data fetching, URL navigation, filtering, and all markup.
+
+### Props and one-way data flow
+
+Props are inputs from a parent to a child. `HomePage` passes category summaries to `CategoryCarousel`; the carousel renders those values. Data flows downward. A child can request an action by calling a callback or, in this implementation, use React Router navigation for the category selection.
+
+### State with `useState`
+
+State is data that changes over time and should cause a render. `HomePage` uses state for fetched products, loading, and errors. The carousel uses state to pause autoplay during interaction. Do not store values that can be calculated from existing state, such as category counts or the top-rated list.
+
+### Effects with `useEffect`
+
+An effect synchronizes a component with something outside normal rendering, such as a network request, browser timer, or event listener. Fetching products and managing `setInterval` belong in effects. Effects return cleanup functions to cancel timers or remove listeners. Effects should not be used just to calculate data that can be derived during render.
+
+### Refs with `useRef`
+
+A ref retains a value without triggering a render. Here it points to the DOM element that scrolls. Calling `scrollBy` or `scrollTo` changes the browser's scroll position; it does not change React data. Avoid using refs as a second place to store category selection.
+
+### Derived data and `useMemo`
+
+Derived data is a calculation from existing inputs. Categories and popular products are derived from `products`. `useMemo` caches a calculation between renders when its dependencies have not changed. It does not make an incorrect calculation correct, and it is not required for small, cheap computations.
+
+### Events and event handlers
+
+`onClick`, `onMouseEnter`, `onMouseLeave`, `onFocusCapture`, and `onBlurCapture` connect user/browser events to functions. Keep handlers focused: a category click navigates; an arrow scrolls; hover/focus pauses autoplay.
+
+### Effects, dependencies, and Strict Mode
+
+Every reactive value used by an effect should be represented in its dependency list. The carousel interval depends on whether autoplay is paused and how many cards exist. React Strict Mode may run effect setup/cleanup an extra time during development to reveal missing cleanup; a correctly cleared interval remains safe.
+
+### URL state with React Router
+
+`useSearchParams` reads and updates query-string values such as `category` and `search`. URL state is useful for filters because it survives refreshes, can be bookmarked, and can be shared. `useNavigate` changes routes from an event handler. Use local component state for temporary UI state; use the URL for navigable/filter state.
+
+### Lists, keys, and semantic buttons
+
+`map()` turns each category object into a card. Give each card a stable `key`, here the unique category name, so React can track list items between renders. Use a `<button>` for an action rather than a clickable `<div>`; buttons support keyboard activation and expose their role to assistive technology. `aria-pressed` communicates the selected state.
+
+## 7. Other concepts used
+
+- **Async/await and promises:** the HTTP request completes later; loading and error states represent those outcomes in the UI.
+- **HTTP and JSON:** `fetch` makes a request, `response.json()` parses the response body, and the service returns the product array.
+- **`Map` grouping:** a key-value collection makes it straightforward to aggregate count/image data once per category.
+- **Immutable array operations:** copy arrays before sorting; derive new data instead of mutating React state.
+- **Browser timers:** `setInterval` schedules repeated work; `clearInterval` stops it. Timers must be cleaned up.
+- **DOM measurements:** `clientWidth`, `scrollWidth`, and `scrollLeft` describe the visible and total scroll area; they help detect when to wrap to the start.
+- **Responsive CSS:** fixed card basis, `min-width: 0`, and horizontal overflow keep the carousel usable on narrow screens without widening the whole page.
+- **Accessibility:** visible focus, meaningful button labels, pressed state, and decorative `alt=""` images make interaction understandable without relying on sight or a pointer.
+
+## 8. Debug by following the value
+
+If the category cards are missing:
+
+1. Check whether `getProducts()` resolves and whether `HomePage` leaves its loading state.
+2. Inspect the product objects for `category` and `thumbnail` fields.
+3. Inspect the derived `categories` array before it is passed to the carousel.
+4. Check that the carousel receives the expected prop shape.
+
+If the card renders but clicking does not filter:
+
+1. Confirm the button passes `category.name` to the click handler.
+2. Confirm navigation creates `/products?category=<name>`.
+3. Confirm `ProductsPage` reads the `category` search parameter.
+4. Confirm its category comparison uses the same exact category value.
+5. Confirm `ProductList` receives `filteredProducts`.
+
+If autoplay does not move:
+
+1. Confirm at least two cards exist and the track has horizontal overflow.
+2. Check whether the mouse is over the carousel or keyboard focus is inside it; autoplay is intentionally paused then.
+3. Check that the interval effect is active and that its cleanup only runs when the component unmounts or dependencies change.
+4. Confirm the first card width plus the CSS gap produces a positive scroll amount.
+
+If arrows or autoplay move the track but a different category becomes selected, selection and scrolling have accidentally been coupled. Scrolling should only change `scrollLeft`; only a card click should update the URL.
+
+## 9. Manual test checklist
+
+- Home loads with category image cards and up to 12 products sorted by rating.
+- Category summaries have the expected labels, counts, and representative images.
+- The carousel advances after four seconds and returns to the start at the end.
+- Hovering or focusing within the carousel pauses autoplay; leaving or blurring resumes it.
+- Arrows and touch/trackpad scrolling work without page-wide horizontal overflow.
+- Clicking a category navigates to the matching catalog filter.
+- All products removes the category restriction.
+- The catalog's category dropdown and search continue to work together.
+- Keyboard focus is visible and each category button exposes its pressed state.
+- At mobile width, card text stays within fixed card dimensions.
+
+## Current implementation facts
+
+- `getProducts()` currently requests all DummyJSON products with `?limit=0`.
+- `HomePage` derives category card data and the 12 highest-rated products.
+- `CategoryCarousel` builds an All products card, reads selection from the URL, auto-scrolls every four seconds, pauses during hover/focus, and navigates to `/products` when a card is clicked.
+- `ProductsPage` owns the actual category/search filtering. Its category dropdown remains available there.
+- The carousel autoplay moves the visible track only; it does not change the selected category.
+
+---
+
 ## Product card reference
 
 The following is the existing reusable product-card example, kept here as a reference.
@@ -87,7 +383,9 @@ export default function ProductCard({
 
 ---
 
-## Category carousel learning guide
+## Archived: earlier category carousel learning guide
+
+This section is retained as a historical draft. It describes a parent-owned `selectedCategory` callback and homepage filtering, which do not match the current URL-driven implementation. Use the first-principles guide at the top of this file for current behavior.
 
 ### Goal and current starting point
 
@@ -305,7 +603,9 @@ Build the feature in this order: derive category summaries, render simple select
 
 ---
 
-## Category carousel: implemented version
+## Archived: earlier category carousel implementation notes
+
+This section describes an earlier iteration and may not match the current component details. Use the first-principles guide at the top of this file as the source of truth.
 
 The category carousel is now implemented in `src/components/CategoryCarousel.jsx`. The category dropdown component was removed because the carousel replaces its only use.
 

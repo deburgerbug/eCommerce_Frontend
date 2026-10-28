@@ -1,127 +1,120 @@
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "react-feather";
 
-function CategoryCarousel({ categories = [] }) {
-    const [searchParams] = useSearchParams()
-    const navigate = useNavigate()
+function CategoryCarousel({ categories = [], productCount = 0, allImage = "" }) {
+  const carouselRef = useRef(null);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [isPaused, setIsPaused] = useState(false);
+  const selectedCategory = searchParams.get("category") ?? "all";
+  const categoryCards = [
+    { name: "all", label: "All products", count: productCount, image: allImage },
+    ...categories.map((category) =>
+      typeof category === "string"
+        ? { name: category, label: category.replaceAll("-", " ") }
+        : category,
+    ),
+  ];
 
-    const [currentIndex, setCurrentIndex] = useState(0)
+  function scrollCategories(direction) {
+    carouselRef.current?.scrollBy({
+      left: direction * 220,
+      behavior: "smooth",
+    });
+  }
 
-    function handleNext() {
-        if (currentIndex < categories.length - 1) {
-            setCurrentIndex(currentIndex - 1)
-        }
+  useEffect(() => {
+    if (isPaused || categoryCards.length < 2) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      const carousel = carouselRef.current;
+      if (!carousel) return;
+
+      const firstCard = carousel.querySelector(".category-carousel-item");
+      const gap = Number.parseFloat(window.getComputedStyle(carousel).gap) || 0;
+      const scrollAmount = (firstCard?.getBoundingClientRect().width ?? 220) + gap;
+      const isAtEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 2;
+
+      carousel.scrollTo({
+        left: isAtEnd ? 0 : carousel.scrollLeft + scrollAmount,
+        behavior: "smooth",
+      });
+    }, 4000);
+
+    return () => window.clearInterval(intervalId);
+  }, [categoryCards.length, isPaused]);
+
+  function handleCategoryClick(category) {
+    const params = new URLSearchParams(searchParams);
+
+    if (category === "all") {
+      params.delete("category");
+    } else {
+      params.set("category", category);
     }
 
-    function 
+    const query = params.toString();
+    navigate({
+      pathname: "/products",
+      search: query ? `?${query}` : "",
+    });
+  }
 
-    return (
-        <section className="category-carousel" aria-label="Shop by category">
-            <button
-                type="button"
-                className="category-carousel-arrow"
-                aria-label="Scroll categories left"
-                onClick={() => scrollCategories(-1)}
-                disabled={!canScrollLeft}
-                style={{ opacity: canScrollLeft ? 1 : 0.3, pointerEvents: canScrollLeft ? "auto" : "none" }}
-            >
-                <ChevronLeft aria-hidden="true" />
-            </button>
+  return (
+    <section
+      className="category-carousel"
+      aria-label="Shop by category"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocusCapture={() => setIsPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setIsPaused(false);
+      }}
+    >
+      <button
+        type="button"
+        className="category-carousel-arrow"
+        aria-label="Scroll categories left"
+        onClick={() => scrollCategories(-1)}
+      >
+        <ChevronLeft aria-hidden="true" />
+      </button>
 
-            <div
-                className="category-carousel-list"
-                ref={carouselRef}
-                style={{ display: "flex", overflowX: "auto", scrollbarWidth: "none" }}
-            >
-                {categories.map((category) => (
-                    <button
-                        key={category}
-                        type="button"
-                        className="category-carousel-item"
-                        onClick={() => handleCategoryClick(category)}
-                    >
-                        {(category || "").replaceAll("-", " ")}
-                    </button>
-                ))}
-            </div>
+      <div className="category-carousel-list" ref={carouselRef}>
+        {categoryCards.map((category) => (
+          <button
+            key={category.name}
+            type="button"
+            className={`category-carousel-item ${
+              selectedCategory === category.name ? "is-active" : ""
+            }`}
+            aria-pressed={selectedCategory === category.name}
+            onClick={() => handleCategoryClick(category.name)}
+          >
+            {category.image && (
+              <img src={category.image} alt="" loading="lazy" />
+            )}
+            <span className="category-carousel-name">{category.label}</span>
+            {category.count != null && (
+              <span className="category-carousel-count">
+                {category.count} {category.count === 1 ? "product" : "products"}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
 
-            <button
-                type="button"
-                className="category-carousel-arrow"
-                aria-label="Scroll categories right"
-                onClick={() => scrollCategories(1)}
-                disabled={!canScrollRight}
-                style={{ opacity: canScrollRight ? 1 : 0.3, pointerEvents: canScrollRight ? "auto" : "none" }}
-            >
-                <ChevronRight aria-hidden="true" />
-            </button>
-        </section>
-    )
+      <button
+        type="button"
+        className="category-carousel-arrow"
+        aria-label="Scroll categories right"
+        onClick={() => scrollCategories(1)}
+      >
+        <ChevronRight aria-hidden="true" />
+      </button>
+    </section>
+  );
 }
 
 export default CategoryCarousel;
-
-
-// import { useRef } from "react"
-// import { useNavigate, useSearchParams } from "react-router-dom"
-// import { ChevronLeft, ChevronRight } from "react-feather"
-
-// function CategoryCarousel({ categories = [] }) {
-//   const carouselRef = useRef(null)
-//   const navigate = useNavigate()
-//   const [searchParams] = useSearchParams()
-
-//   function scrollCategories(direction) {
-//     carouselRef.current?.scrollBy({
-//       left: direction * 240,
-//       behavior: "smooth",
-//     })
-//   }
-
-//   function handleCategoryClick(category) {
-//     const params = new URLSearchParams(searchParams)
-//     params.set("category", category)
-
-//     navigate({
-//       pathname: "/products",
-//       search: params.toString(),
-//     })
-//   }
-
-//   return (
-//     <section className="category-carousel" aria-label="Shop by category">
-//       <button
-//         type="button"
-//         className="category-carousel-arrow"
-//         aria-label="Scroll categories left"
-//         onClick={() => scrollCategories(-1)}
-//       >
-//         <ChevronLeft aria-hidden="true" />
-//       </button>
-
-//       <div className="category-carousel-list" ref={carouselRef}>
-//         {categories.map((category) => (
-//           <button
-//             key={category}
-//             type="button"
-//             className="category-carousel-item"
-//             onClick={() => handleCategoryClick(category)}
-//           >
-//             {category.replaceAll("-", " ")}
-//           </button>
-//         ))}
-//       </div>
-
-//       <button
-//         type="button"
-//         className="category-carousel-arrow"
-//         aria-label="Scroll categories right"
-//         onClick={() => scrollCategories(1)}
-//       >
-//         <ChevronRight aria-hidden="true" />
-//       </button>
-//     </section>
-//   )
-// }
-
-// export default CategoryCarousel

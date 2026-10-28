@@ -44,6 +44,15 @@ function ProductDetailsPage() {
         <Link to="/" className="details-back" > Back </Link>
         <div className="product-details-layout" >
           <div className="details-media">
+            <button
+              type="button"
+              className={`details-wish-button ${isInWishlist(product.id) ? "is-saved" : ""}`}
+              onClick={() => toggleWishlist(product)}
+              aria-label={isInWishlist(product.id) ? `Remove ${product.title} from wishlist` : `Add ${product.title} to wishlist`}
+              aria-pressed={isInWishlist(product.id)}
+            >
+              {isInWishlist(product.id) ? <FaHeart aria-hidden="true" /> : <FaRegHeart aria-hidden="true" />}
+            </button>
             <img className="product-details-image" src={product.thumbnail} alt={product.title} />
           </div>
           <div className="details-summary">
@@ -60,13 +69,6 @@ function ProductDetailsPage() {
                 disabled={product.stock === 0 || (cartItem?.quantity ?? 0) >= product.stock}>
                 <FiShoppingCart aria-hidden="true" />
                 {product.stock === 0 ? "Out of stock" : "Add to cart"}
-              </button>
-              <button type="button"
-                className={`btn-wish ${isInWishlist(product.id) ? "is-saved" : ""}`}
-                onClick={() => toggleWishlist(product)}
-                aria-pressed={isInWishlist(product.id)}>
-                {isInWishlist(product.id) ? <FaHeart aria-hidden="true" /> : <FaRegHeart aria-hidden="true" />}
-                {isInWishlist(product.id) ? "Saved" : "Save"}
               </button>
             </div>
             {cartItem && (
