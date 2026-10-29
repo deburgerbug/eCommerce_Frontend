@@ -1,4 +1,4 @@
-import { readJSON, writeJSON } from "./storage.JS"
+import { readJSON, writeJSON } from "./storage.js"
 
 export function getWishlistKey(user) {
   return user === null ? "wishlist:guest" : "wishlist:" + user.id

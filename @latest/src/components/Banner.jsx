@@ -8,7 +8,9 @@ const BANNERS = [
 function Banner(){
     return(
         <div>
-
+            {BANNERS.map(()=>{
+                
+            })}
         </div>
     )
 }
