@@ -4,7 +4,7 @@ import ProductList from "../components/ProductList";
 import { getProducts } from "../services/productService";
 import HeroSlider from "../components/HeroSlider";
 import "../styles/ProductsCatalog.css";
-
+import SidebarFilter from "../components/SidebarFilter";
 function HomePage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,20 +58,22 @@ function HomePage() {
   return (
     <section className="products">
       <HeroSlider />
+      
       <CategoryCarousel
         categories={categories}
         productCount={products.length}
-        allImage={products[0]?.thumbnail}
+        allImage={products[1100]?.thumbnail}
       />
-
-      <section aria-labelledby="popular-products-heading">
-        <div className="products-heading">
-          <h1 id="popular-products-heading">Popular products</h1>
-          <p className="product-count">{popularProducts.length} products</p>
+      <div>
+        <section aria-labelledby="popular-products-heading">
+        <div className="home-layout">
+          <SidebarFilter products={products} ></SidebarFilter>
         </div>
 
         <ProductList products={popularProducts} />
       </section>
+      </div>
+      
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import ProductsPage from "./pages/ProductsPage";
 import OrdersPage from "./pages/OrdersPage";
@@ -46,7 +46,6 @@ function App() {
 }
 
 function AppLayout() {
-  const { pathname } = useLocation();
 
   return (
     <>
@@ -54,7 +53,7 @@ function AppLayout() {
       <main className="page">
         <Outlet />
       </main>
-      {pathname === "/" && <Footer />}
+    <Footer />
     </>
   );
 }

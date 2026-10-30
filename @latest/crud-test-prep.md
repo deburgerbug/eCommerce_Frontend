@@ -667,7 +667,8 @@ Pick any entity for Exercise 1 and send steps 1 and 2 of the pipeline (fields ta
 
 client/script.js
 
-`
+```js
+
 const API_URL = "http://localhost:3000/api/students";
 const form = document.getElementById("studentForm");
 const statusEl = document.getElementById("status");
@@ -719,13 +720,16 @@ async function handleSubmit(event) {
 }
 
 form.addEventListener("submit", handleSubmit);
-`
+
+```
 
 
 ________________________________________________________________________________________________________________________________
 
 index.css
-`
+
+```css
+
 body {
   font-family: sans-serif;
   max-width: 420px;
@@ -769,13 +773,15 @@ textarea {
   color: #c00;
 }
 `
-
+```
 
 _____________________________________________________________________________________________________________________________
 
 
 server/student.js
-`
+
+```js
+
 const mongoose = require("mongoose");
 
 const studentSchema = new mongoose.Schema(
@@ -792,7 +798,8 @@ const studentSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Student", studentSchema);
-`
+
+```
 
 
 _______________________________________________________________________________________________________________________________
@@ -800,7 +807,8 @@ ________________________________________________________________________________
 
 server/server.js
 
-`
+```js
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -870,7 +878,8 @@ mongoose
   .connect("mongodb://127.0.0.1:27017/studentdb")
   .then(() => app.listen(3000, () => console.log("Server on 3000")))
   .catch(err => console.error("DB connection failed:", err));
-`
+
+```
 
 
 
@@ -883,7 +892,8 @@ mongoose
 
 server/studentValidation.js
 
-`
+```js
+
   const { z } = require("zod");
 
 const studentSchema = z.object({
@@ -911,4 +921,5 @@ function validateStudent(req, res, next) {
 }
 
 module.exports = { validateStudent };
-`
+
+```
