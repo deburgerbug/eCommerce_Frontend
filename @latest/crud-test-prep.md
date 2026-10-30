@@ -661,3 +661,254 @@ Commonly forgotten:
 ### First assignment
 
 Pick any entity for Exercise 1 and send steps 1 and 2 of the pipeline (fields table and endpoints table), no code. Reviewed senior-style before building starts.
+
+
+
+
+client/script.js
+
+`
+const API_URL = "http://localhost:3000/api/students";
+const form = document.getElementById("studentForm");
+const statusEl = document.getElementById("status");
+
+function clearErrors() {
+  document.querySelectorAll(".error").forEach(el => (el.textContent = ""));
+  statusEl.textContent = "";
+  statusEl.className = "";
+}
+
+function showErrors(errors) {
+  Object.entries(errors).forEach(([field, message]) => {
+    const el = document.getElementById(field + "Error");
+    if (el) el.textContent = message;
+  });
+}
+
+function showStatus(message, type) {
+  statusEl.textContent = message;
+  statusEl.className = type;
+}
+
+async function handleSubmit(event) {
+  event.preventDefault();
+  clearErrors();
+
+  const data = Object.fromEntries(new FormData(form));
+  Object.keys(data).forEach(k => (data[k] = data[k].trim()));
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const body = await response.json();
+
+    if (response.ok) {
+      showStatus("Student registered successfully", "success");
+      form.reset();
+    } else if (response.status === 422) {
+      showErrors(body.errors);
+    } else {
+      showStatus(body.message || "Server error", "fail");
+    }
+  } catch (err) {
+    showStatus("Network error. Is the server running?", "fail");
+  }
+}
+
+form.addEventListener("submit", handleSubmit);
+`
+
+
+________________________________________________________________________________________________________________________________
+
+index.css
+`
+body {
+  font-family: sans-serif;
+  max-width: 420px;
+  margin: 40px auto;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.error {
+  color: #c00;
+  font-size: 13px;
+  display: block;
+  min-height: 16px;
+}
+
+#status {
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+#status.success {
+  color: #070;
+}
+
+#status.fail {
+  color: #c00;
+}
+`
+
+
+_____________________________________________________________________________________________________________________________
+
+
+server/student.js
+`
+const mongoose = require("mongoose");
+
+const studentSchema = new mongoose.Schema(
+  {
+    fullName: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    phone: { type: String, required: true },
+    dob: { type: Date, required: true },
+    course: { type: String, required: true },
+    year: { type: Number, required: true, min: 1, max: 4 },
+    address: { type: String, required: true, trim: true },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Student", studentSchema);
+`
+
+
+_______________________________________________________________________________________________________________________________
+
+
+server/server.js
+
+`
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const Student = require("./Student");
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const COURSES = ["Computer", "IT", "Mechanical", "Civil"];
+
+function validateStudent(body) {
+  const errors = {};
+  const { fullName, email, phone, dob, course, year, address } = body;
+
+  if (!fullName || fullName.trim().length < 2) {
+    errors.fullName = "Full name must be at least 2 characters";
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.email = "Enter a valid email";
+  }
+  if (!phone || !/^\d{10}$/.test(phone)) {
+    errors.phone = "Phone must be exactly 10 digits";
+  }
+  if (!dob || isNaN(Date.parse(dob))) {
+    errors.dob = "Enter a valid date of birth";
+  } else if (new Date(dob) > new Date()) {
+    errors.dob = "Date of birth cannot be in the future";
+  }
+  if (!COURSES.includes(course)) {
+    errors.course = "Select a valid course";
+  }
+  const y = Number(year);
+  if (!year || !Number.isInteger(y) || y < 1 || y > 4) {
+    errors.year = "Year must be an integer between 1 and 4";
+  }
+  if (!address || address.trim().length < 5) {
+    errors.address = "Address must be at least 5 characters";
+  }
+  return errors;
+}
+
+app.post("/api/students", async (req, res) => {
+  const errors = validateStudent(req.body);
+  if (Object.keys(errors).length > 0) {
+    return res.status(422).json({ errors });
+  }
+
+  try {
+    const student = await Student.create({ ...req.body, year: Number(req.body.year) });
+    return res.status(201).json({ message: "Created", id: student._id });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(422).json({ errors: { email: "Email already registered" } });
+    }
+    if (err.name === "ValidationError") {
+      const errs = {};
+      Object.values(err.errors).forEach(e => (errs[e.path] = e.message));
+      return res.status(422).json({ errors: errs });
+    }
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+mongoose
+  .connect("mongodb://127.0.0.1:27017/studentdb")
+  .then(() => app.listen(3000, () => console.log("Server on 3000")))
+  .catch(err => console.error("DB connection failed:", err));
+`
+
+
+
+
+  __________________________________________________________________________________________________________
+
+
+
+
+
+server/studentValidation.js
+
+`
+  const { z } = require("zod");
+
+const studentSchema = z.object({
+  fullName: z.string({ error: "Full name is required" }).trim().min(2, "Full name must be at least 2 characters"),
+  email: z.email({ error: "Enter a valid email" }).trim().toLowerCase(),
+  phone: z.string({ error: "Phone is required" }).regex(/^\d{10}$/, "Phone must be exactly 10 digits"),
+  dob: z.coerce.date({ error: "Enter a valid date of birth" }).refine(d => d <= new Date(), "Date of birth cannot be in the future"),
+  course: z.enum(["Computer", "IT", "Mechanical", "Civil"], { error: "Select a valid course" }),
+  year: z.coerce.number({ error: "Year is required" }).int("Year must be an integer").min(1, "Year must be 1 to 4").max(4, "Year must be 1 to 4"),
+  address: z.string({ error: "Address is required" }).trim().min(5, "Address must be at least 5 characters"),
+});
+
+function validateStudent(req, res, next) {
+  const result = studentSchema.safeParse(req.body);
+  if (!result.success) {
+    const errors = {};
+    for (const issue of result.error.issues) {
+      const field = issue.path[0];
+      if (!(field in errors)) errors[field] = issue.message;
+    }
+    return res.status(422).json({ errors });
+  }
+  req.body = result.data;
+  next();
+}
+
+module.exports = { validateStudent };
+`
