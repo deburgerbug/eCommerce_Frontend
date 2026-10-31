@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import "../styles/Footer.css"
+import { STORE_NAME, TAG_LINE } from "../utils/constants";
 const FOOTER_COLUMNS = [
     {
         title: "Shop",
@@ -25,8 +26,8 @@ function Footer(){
         <footer className="footer" >
             <div className="footer-inner" >
                 <div className="footer-brand" >
-                    <h2>BhikarChot Store</h2>
-                    <p>Fresh Products on Click</p>
+                    <h2>{STORE_NAME} </h2>
+                    <p>{TAG_LINE}</p>
                 </div>
                 {FOOTER_COLUMNS.map((column) => (
                     <nav className="footer-column" key={column.title} aria-label={column.title} >
@@ -41,7 +42,7 @@ function Footer(){
                     </nav>
                 ))}
             </div>
-            <p className="footer-copy" >&copy; {new Date().getFullYear()} BhikarChot Store. All rights reserved.</p>
+            <p className="footer-copy" >&copy; {new Date().getFullYear()} {STORE_NAME}. All rights reserved</p>
         </footer>
     )
 }

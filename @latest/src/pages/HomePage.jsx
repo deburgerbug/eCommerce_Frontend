@@ -64,16 +64,18 @@ function HomePage() {
         productCount={products.length}
         allImage={products[0]?.thumbnail}
       />
+
+
       <div className="home-layout" >
-        <SidebarFilter products={products} ></SidebarFilter>
-        <section aria-labelledby="popular-products-heading">
-          <div className="home-layout">
-          </div>
-
-          <ProductList products={popularProducts} />
+        <SidebarFilter products={products} />
+        <section aria-labelledby="popular-produccts-heading" >
+          <div className="products-heading" ></div>
+          <h2 id="popular-products-heading">Popular Products</h2>
+          <p className="product-count" >{popularProducts.length} Products</p>
         </section>
-      </div>
 
+        <ProductList products={popularProducts} />
+      </div>
     </section>
   );
 }

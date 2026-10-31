@@ -58,7 +58,7 @@ function ProductDetailsPage() {
               <p className="details-brand" > by {product.brand}</p>
             )}
             <p className="details-price"> ${product.price.toFixed(2)} </p>
-            <p>{product.description} </p>)
+            <p>{product.description} </p>
             <p>In Stock: {product.stock} </p>
             <div className="details-actions" >
               {cartItem ?(

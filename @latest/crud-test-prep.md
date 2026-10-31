@@ -923,3 +923,467 @@ function validateStudent(req, res, next) {
 module.exports = { validateStudent };
 
 ```
+
+```js
+Act as my senior software engineer and coding mentor.
+
+I want to learn how to solve programming problems independently rather than blindly copying AI-generated code.
+
+Whenever I give you a coding task, follow this approach:
+
+1. Problem Understanding
+
+Explain what the problem is asking.
+Identify inputs, outputs, requirements and edge cases.
+
+2. Solution Design
+
+Break the problem into smaller steps.
+Explain the logical flow.
+Show pseudocode before actual implementation.
+
+3. Concept Identification
+
+Identify the programming concepts and patterns involved.
+Explain why these concepts are appropriate.
+Mention whether this is a commonly reusable pattern.
+
+4. Implementation
+
+Write clean, maintainable code.
+Explain important lines and functions.
+Explain the responsibility of each component.
+Explain how different parts communicate with each other.
+
+5. Design Decisions
+
+Explain why you selected this approach.
+Discuss alternative approaches and their trade-offs.
+Explain common mistakes and edge cases.
+
+6. Learning and Practice
+
+Give me a similar problem to solve independently.
+Give me a slightly modified requirement to test my understanding.
+Ask me questions to check whether I understand the implementation.
+
+7. Reusability
+
+Explain which parts of the solution can be reused in future problems.
+Identify the underlying coding pattern.
+Explain how I can recognize when to apply this pattern to a new requirement.
+
+Important: Don't just give me the final code immediately. Help me think through the problem first. If my approach is incorrect, guide me toward the correct solution instead of immediately providing the answer.
+
+```
+
+
+// import { useMemo, useState } from "react";
+// import { DEFAULT_FILTERS } from "../services/filterProducts";
+// import "../styles/SidebarFilter.css";
+
+// const VISIBLE_BRANDS = 7;
+// const QUICK_PRICES = [10, 50, 100, 500];
+
+// function SidebarFilter({
+//   products = [],
+//   filters = DEFAULT_FILTERS,
+//   onChange,
+//   onClear,
+// }) {
+//   const [showAllBrands, setShowAllBrands] = useState(false);
+
+//   const categories = useMemo(() => {
+//     const counts = new Map();
+
+//     for (const product of products) {
+//       counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
+//     }
+
+//     return [...counts.entries()]
+//       .map(([name, count]) => ({ name, count }))
+//       .sort((a, b) => a.name.localeCompare(b.name));
+//   }, [products]);
+
+//   const brands = useMemo(() => {
+//     const counts = new Map();
+
+//     for (const product of products) {
+//       if (!product.brand) continue;
+//       counts.set(product.brand, (counts.get(product.brand) ?? 0) + 1);
+//     }
+
+//     return [...counts.entries()]
+//       .map(([name, count]) => ({ name, count }))
+//       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+//   }, [products]);
+
+//   const visibleBrands = useMemo(() => {
+//     if (showAllBrands) return brands;
+
+//     const top = brands.slice(0, VISIBLE_BRANDS);
+//     const selectedHidden = brands
+//       .slice(VISIBLE_BRANDS)
+//       .filter((brand) => filters.brands.includes(brand.name));
+
+//     return [...top, ...selectedHidden];
+//   }, [brands, filters.brands, showAllBrands]);
+
+//   const maxProductPrice = useMemo(
+//     () => Math.ceil(Math.max(0, ...products.map((product) => product.price))),
+//     [products],
+//   );
+
+//   const sliderValue = filters.maxPrice ?? maxProductPrice;
+
+//   function selectCategory(category) {
+//     onChange?.({ ...filters, category });
+//   }
+
+//   function toggleBrand(brand) {
+//     const brandList = filters.brands.includes(brand)
+//       ? filters.brands.filter((name) => name !== brand)
+//       : [...filters.brands, brand];
+
+//     onChange?.({ ...filters, brands: brandList });
+//   }
+
+//   function changePrice(value) {
+//     onChange?.({ ...filters, maxPrice: value >= maxProductPrice ? null : value });
+//   }
+
+//   return (
+//     <aside className="sidebar" aria-label="Product filters">
+//       <div className="sidebar-header">
+//         <h2>Filters</h2>
+//         <button type="button" className="sidebar-clear" onClick={onClear}>
+//           Clear all
+//         </button>
+//       </div>
+
+//       <section className="sidebar-section" aria-labelledby="sidebar-categories-heading">
+//         <h3 id="sidebar-categories-heading">Categories</h3>
+//         <ul className="sidebar-categories">
+//           <li>
+//             <button
+//               type="button"
+//               className={`sidebar-category ${filters.category === "all" ? "is-active" : ""}`}
+//               aria-pressed={filters.category === "all"}
+//               onClick={() => selectCategory("all")}
+//             >
+//               <span className="sidebar-category-name">All products</span>
+//               <span className="sidebar-count">{products.length}</span>
+//             </button>
+//           </li>
+//           {categories.map((category) => (
+//             <li key={category.name}>
+//               <button
+//                 type="button"
+//                 className={`sidebar-category ${filters.category === category.name ? "is-active" : ""}`}
+//                 aria-pressed={filters.category === category.name}
+//                 onClick={() => selectCategory(category.name)}
+//               >
+//                 <span className="sidebar-category-name">
+//                   {category.name.replaceAll("-", " ")}
+//                 </span>
+//                 <span className="sidebar-count">{category.count}</span>
+//               </button>
+//             </li>
+//           ))}
+//         </ul>
+//       </section>
+
+//       <fieldset className="sidebar-section sidebar-fieldset">
+//         <legend>Brands</legend>
+//         {visibleBrands.map((brand) => (
+//           <label key={brand.name} className="sidebar-brand">
+//             <input
+//               type="checkbox"
+//               checked={filters.brands.includes(brand.name)}
+//               onChange={() => toggleBrand(brand.name)}
+//             />
+//             <span className="sidebar-brand-name">{brand.name}</span>
+//             <span className="sidebar-count">{brand.count}</span>
+//           </label>
+//         ))}
+//         {brands.length > VISIBLE_BRANDS && (
+//           <button
+//             type="button"
+//             className="sidebar-clear"
+//             onClick={() => setShowAllBrands((show) => !show)}
+//           >
+//             {showAllBrands ? "Show fewer" : `Show all ${brands.length} brands`}
+//           </button>
+//         )}
+//       </fieldset>
+
+//       <section className="sidebar-section" aria-labelledby="sidebar-price-heading">
+//         <h3 id="sidebar-price-heading">Price</h3>
+//         <label className="sidebar-price-label">
+//           <span>
+//             {filters.maxPrice === null ? "Any price" : `Up to $${filters.maxPrice}`}
+//           </span>
+//           <input
+//             type="range"
+//             min="0"
+//             max={maxProductPrice}
+//             step="1"
+//             value={sliderValue}
+//             onChange={(event) => changePrice(Number(event.target.value))}
+//           />
+//         </label>
+//         <div className="sidebar-quick-prices">
+//           {QUICK_PRICES.map((price) => (
+//             <button
+//               key={price}
+//               type="button"
+//               className={`sidebar-quick ${filters.maxPrice === price ? "is-active" : ""}`}
+//               onClick={() => changePrice(price)}
+//             >
+//               Under ${price}
+//             </button>
+//           ))}
+//         </div>
+//       </section>
+//     </aside>
+//   );
+// }
+
+// export default SidebarFilter;
+
+
+* .sidebar-section {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.sidebar-category {
+  align-items: center;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  justify-content: space-between;
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  width: 100%;
+}
+
+.sidebar-category:hover {
+  background: #f1f5f9;
+}
+
+.sidebar-category.is-active {
+  background: #f0fdf4;
+  color: #166534;
+  font-weight: 700;
+}
+
+.sidebar-category:focus-visible,
+.sidebar-quick:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.sidebar-fieldset {
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  display: grid;
+  gap: 0.4rem;
+  margin-inline: 0;
+  min-width: 0;
+  padding-inline: 0;
+}
+
+.sidebar-fieldset legend {
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0;
+}
+
+.sidebar-brand {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sidebar-brand-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-price-label {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sidebar-price-label input {
+  width: 100%;
+}
+
+.sidebar-quick-prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.sidebar-quick {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.7rem;
+}
+
+.sidebar-quick:hover {
+  border-color: #166534;
+}
+
+.sidebar-quick.is-active {
+  background: #f0fdf4;
+  border-color: #166534;
+  color: #166534;
+}
+
+.sidebar-category-name {
+  text-transform: capitalize;
+}
+
+.sidebar-count {
+  color: #64748b;
+  font-size: 0.85rem;
+} */
+
+
+
+
+
+
+
+
+import { useEffect, useMemo, useState } from "react";
+import CategoryCarousel from "../components/CategoryCarousel";
+import ProductList from "../components/ProductList";
+import { getProducts } from "../services/productService";
+import HeroSlider from "../components/HeroSlider";
+import "../styles/ProductsCatalog.css";
+import SidebarFilter from "../components/SidebarFilter";
+import {
+  DEFAULT_FILTERS,
+  filterProducts,
+  hasActiveFilters,
+} from "../services/filterProducts";
+
+function HomePage() {
+  const [products, setProducts] = useState([]);
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        setProducts(await getProducts());
+      } catch (err) {
+        setError(err.message || "Unable to load products.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadProducts();
+  }, []);
+
+  const categories = useMemo(() => {
+    const categoriesByName = new Map();
+
+    for (const product of products) {
+      const existing = categoriesByName.get(product.category);
+
+      if (existing) {
+        existing.count += 1;
+      } else {
+        categoriesByName.set(product.category, {
+          name: product.category,
+          label: product.category.replaceAll("-", " "),
+          count: 1,
+          image: product.thumbnail,
+        });
+      }
+    }
+
+    return [...categoriesByName.values()].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [products]);
+
+  const popularProducts = useMemo(
+    () => [...products].sort((a, b) => b.rating - a.rating).slice(0, 12),
+    [products],
+  );
+
+  const filtering = hasActiveFilters(filters);
+  const visibleProducts = useMemo(
+    () => (filtering ? filterProducts(products, filters) : popularProducts),
+    [filtering, products, filters, popularProducts],
+  );
+
+  if (loading) return <p role="status">Loading products...</p>;
+  if (error) return <p role="alert">Error: {error}</p>;
+
+  return (
+    <section className="products">
+      <HeroSlider />
+
+      <CategoryCarousel
+        categories={categories}
+        productCount={products.length}
+        allImage={products[0]?.thumbnail}
+      />
+
+
+      <div className="home-layout">
+        <SidebarFilter
+          products={products}
+          filters={filters}
+          onChange={setFilters}
+          onClear={() => setFilters(DEFAULT_FILTERS)}
+        />
+
+        <section aria-labelledby="popular-products-heading">
+          <div className="products-heading">
+            <h1 id="popular-products-heading">
+              {filtering ? "Filtered products" : "Popular products"}
+            </h1>
+            <p className="product-count">{visibleProducts.length} products</p>
+          </div>
+
+          {visibleProducts.length > 0 ? (
+            <ProductList products={visibleProducts} />
+          ) : (
+            <div className="empty-state">
+              <p className="empty-results">No products match these filters.</p>
+              <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)}>
+                Clear filters
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
+
+    </section>
+  );
+}
+
+export default HomePage; 

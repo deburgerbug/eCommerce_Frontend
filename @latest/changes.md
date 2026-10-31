@@ -3386,3 +3386,789 @@ Styling login and register never had: centered 26rem card.
   .auth { margin-block: 1rem; padding: 1.5rem; }
 }
 ```
+
+__________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+
+# SidebarFilter: Apply button, URL-remembered filters, sticky sidebar
+
+## 1. What the problem is asking
+
+| | |
+|---|---|
+| **Input** | Filter choices (category, brands, max price) picked in the sidebar |
+| **Output** | Home: sidebar + Popular products. Products page: sidebar + products matching the applied filters |
+| **Rules** | Nothing changes until **Apply** is clicked. Apply on Home redirects to `/products` and the choices are still selected there. Sidebar stays in view while products scroll. |
+| **Edge cases** | Products with no brand; selected brand/category that ends up with 0 products; navbar `?search=` must survive; unknown `maxPrice` in the URL; brand names with `&` or spaces |
+
+## 2. Solution design
+
+Two kinds of filter state:
+
+- **Draft**: what the user is picking right now. Lives **inside** `SidebarFilter` (`useState`).
+- **Applied**: what is really filtering the products. Lives **in the URL** (`?category=..&brand=..&maxPrice=..`).
+
+The URL is the "memory". Because Home and Products both read/write the same URL format, the filters survive the redirect, a page refresh and the back button, and there is no new context or global store.
+
+```text
+SidebarFilter:
+  draft = copy of appliedFilters
+  click category / brand / price  -> change draft only
+  click "Clear all"               -> draft = defaults
+  click "Apply"                   -> onApply(draft)       (parent decides what that means)
+
+HomePage.onApply(filters):
+  url = buildSearchParams(empty, filters)
+  navigate("/products?" + url)
+
+ProductsPage:
+  filters = parseFilters(URL)
+  searched = products matching navbar search
+  shown    = filterProducts(searched, filters)
+  onApply(filters) -> setSearchParams(buildSearchParams(current URL, filters))
+```
+
+## 3. Concepts and patterns
+
+- **Draft vs applied state** (a "staged edit"). Reusable in any form with a Save/Apply button.
+- **URL as state** (`useSearchParams`). Good when state should be shareable, bookmarkable and survive refresh. This is how real shop filters work.
+- **Callback props** (`onApply`). The sidebar doesn't know where it lives; the page decides what Apply does.
+- **Faceted counts**. Each group's counts ignore its own selection but respect the other groups.
+- **`key` to reset a component**. Changing `key` makes React rebuild the component, so its draft re-syncs with the URL.
+- **Sticky + flex column layout** for a sidebar that doesn't scroll with the page.
+
+## 4. Files changed
+
+| File | Change |
+|---|---|
+| `src/utils/filterProducts.js` | Was an empty `parseFilters()`. Now `parseFilters` (URL → filters) and `buildSearchParams` (filters → URL) |
+| `src/components/SidebarFilter.jsx` | Rewritten: draft state, facets, Apply button |
+| `src/pages/HomePage.jsx` | Apply → navigate to `/products?...`; layout bug fixed |
+| `src/pages/ProductsPage.jsx` | Uses the sidebar instead of the `<select>`; reads filters from URL |
+| `src/styles/SidebarFilter.css` | Sticky sidebar, scrolling body, fixed Apply footer |
+| `src/styles/ProductsCatalog.css` | `.home-layout` renamed to `.catalog-layout` (used by both pages) |
+
+Not changed: `services/filterProducts.js` (already had `DEFAULT_FILTERS`, `filterProducts`), `CategoryCarousel.jsx` (its `?category=` links already match the new URL format).
+
+**Bugs fixed along the way**
+
+- `import "../styles/sidebarFilter.css"` didn't match the real file name `SidebarFilter.css`. It works on Windows but breaks on Linux/Mac builds and deployment.
+- In `HomePage`, `<ProductList>` sat outside the `<section>`, so it became a separate grid cell under the sidebar. It is now inside the section.
+- `aria-labelledby="popular-produccts-heading"` had a typo and didn't match the heading id.
+
+`components/ProductFilters.jsx` (the old `<select>`) is now unused. You can delete it when you're ready.
+
+## 5. How the parts talk to each other
+
+```text
+HomePage / ProductsPage
+   │  products, appliedFilters, onApply
+   ▼
+SidebarFilter ── user clicks ──► draft (local state)
+   │ Apply
+   ▼
+onApply(draft) ──► Home: navigate("/products?...")      Products: setSearchParams(...)
+                                   │                                  │
+                                   └────────────► URL ◄───────────────┘
+                                                    │ parseFilters
+                                                    ▼
+                                      ProductsPage filters the list
+```
+
+## 6. Design decisions
+
+- **Draft inside the sidebar, applied in the URL.** The page never re-renders the product grid while the user is still choosing.
+- **`Clear all` only resets the draft.** Same rule as everything else: nothing changes until Apply. (Alternative: make Clear apply immediately. Easy to change: `onApply(DEFAULT_FILTERS)`.)
+- **No `useMemo` in the sidebar.** About 200 products, so the loops are cheap. Add `useMemo` only if you measure a slowdown.
+- **Facets use `searchedProducts`**, so counts match what the user sees when a navbar search is active.
+- **Selected-but-empty items stay visible** (count 0) via `keepSelected`, otherwise a ticked brand could silently disappear and still filter the list.
+- **Alternatives:** a Context (`FiltersContext`) would also work, but it is lost on refresh and can't be shared as a link. `localStorage` survives refresh but is invisible and can go stale.
+
+**Common mistakes**
+
+- Using the draft to filter the list directly (then Apply does nothing).
+- Forgetting to keep `?search=` when building the URL (`buildSearchParams` starts from the current params for this reason).
+- Putting `overflow: hidden` on a parent of a sticky element (sticky then stops working).
+- Storing brands as one string in the URL. Use repeated `?brand=` and `getAll`.
+
+## 7. Practice
+
+**Similar problem.** Build a "Sort by" dropdown (price low→high, high→low, rating) that also uses an Apply button and is remembered in the URL (`?sort=price-asc`).
+
+**Modified requirement.** Add a "Minimum rating" filter (stars) to the sidebar. Which files need to change? (Hint: count them before you start.)
+
+**Check yourself**
+
+1. Why is `key={JSON.stringify(filters)}` on `SidebarFilter` needed on Products, but not on Home?
+2. What would break if `buildSearchParams` started from `new URLSearchParams()` instead of `currentParams`?
+3. Why do the category counts ignore the category choice but the brand counts respect it?
+4. Where would the code change if "Clear all" should apply immediately?
+
+## 8. Reusability
+
+- `parseFilters` / `buildSearchParams`: any list page (orders, users, tickets) with filters in the URL.
+- `countBy` + `keepSelected`: any facet list.
+- Draft + `onApply` callback: any "edit then confirm" panel.
+- **How to recognise the pattern:** the requirement says "after confirming", "remember", "shareable link" or "survive refresh". That means staged draft state + state in the URL.
+
+## 9. Final code
+
+### `utils/filterProducts.js`
+
+```js
+// These two functions convert between the URL and the "filters" object.
+// The URL is where we REMEMBER the applied filters.
+//
+//   filters object:  { category: "beauty", brands: ["Essence"], maxPrice: 50 }
+//   URL:             /products?category=beauty&brand=Essence&maxPrice=50
+
+// URL  ->  filters object
+export function parseFilters(searchParams) {
+  const rawPrice = searchParams.get("maxPrice");
+  const price = Number(rawPrice);
+
+  return {
+    category: searchParams.get("category") ?? "all",
+    brands: searchParams.getAll("brand"), // ?brand=A&brand=B  ->  ["A", "B"]
+    maxPrice: rawPrice && !Number.isNaN(price) ? price : null,
+  };
+}
+
+
+
+
+// filters object  ->  URL
+// We start from the current params so other params (like ?search=) are kept.
+export function buildSearchParams(currentParams, filters) {
+  const next = new URLSearchParams(currentParams);
+
+  // remove the old filter values first, then add the new ones
+  next.delete("category");
+  next.delete("brand");
+  next.delete("maxPrice");
+
+  if (filters.category !== "all") next.set("category", filters.category);
+  for (const brand of filters.brands) next.append("brand", brand);
+  if (filters.maxPrice !== null) next.set("maxPrice", String(filters.maxPrice));
+
+  return next;
+}
+
+```
+
+### `components/SidebarFilter.jsx`
+
+```jsx
+import { useState } from "react";
+import { DEFAULT_FILTERS, filterProducts } from "../services/filterProducts";
+import "../styles/SidebarFilter.css";
+
+const VISIBLE_BRANDS = 7;
+const QUICK_PRICES = [10, 50, 100, 500];
+
+// Count how many products have each value of a field.
+// countBy(products, "brand") -> [{ name: "Apple", count: 3 }, ...]
+function countBy(products, field) {
+  const counts = new Map();
+
+  for (const product of products) {
+    const value = product[field];
+    if (!value) continue; // some products have no brand
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+
+  return [...counts.entries()].map(([name, count]) => ({ name, count }));
+}
+
+// If something is selected but has no products left, still show it (count 0)
+// so the user can see it and un-select it.
+function keepSelected(list, selectedNames) {
+  const result = [...list];
+
+  for (const name of selectedNames) {
+    if (!result.some((item) => item.name === name)) {
+      result.push({ name, count: 0 });
+    }
+  }
+
+  return result;
+}
+
+function SidebarFilter({
+  products = [],
+  appliedFilters = DEFAULT_FILTERS,
+  onApply,
+}) {
+  // "draft" = what the user is picking right now (not applied yet).
+  // "appliedFilters" (from the parent) = what is currently applied.
+  const [draft, setDraft] = useState(appliedFilters);
+  const [showAllBrands, setShowAllBrands] = useState(false);
+
+  // ---------- Faceted counts ----------
+  // Category counts ignore the category choice, brand counts ignore the brand
+  // choice. Every other choice is respected, so numbers match what you'd get.
+  const productsForCategories = filterProducts(products, { ...draft, category: "all" });
+  const productsForBrands = filterProducts(products, { ...draft, brands: [] });
+
+  const categories = keepSelected(
+    countBy(productsForCategories, "category"),
+    draft.category === "all" ? [] : [draft.category],
+  ).sort((a, b) => a.name.localeCompare(b.name));
+
+  const brands = keepSelected(
+    countBy(productsForBrands, "brand"),
+    draft.brands,
+  ).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
+  const visibleBrands = showAllBrands ? brands : brands.slice(0, VISIBLE_BRANDS);
+
+  const maxProductPrice = Math.ceil(
+    Math.max(0, ...products.map((product) => product.price)),
+  );
+  const sliderValue = draft.maxPrice ?? maxProductPrice;
+
+  // ---------- Handlers: they only change the DRAFT ----------
+  function selectCategory(category) {
+    setDraft({ ...draft, category });
+  }
+
+  function toggleBrand(brand) {
+    const brands = draft.brands.includes(brand)
+      ? draft.brands.filter((name) => name !== brand) // remove it
+      : [...draft.brands, brand]; // add it
+
+    setDraft({ ...draft, brands });
+  }
+
+  function changePrice(value) {
+    // slider at the far right means "any price"
+    setDraft({ ...draft, maxPrice: value >= maxProductPrice ? null : value });
+  }
+
+  function handleClear() {
+    setDraft(DEFAULT_FILTERS);
+  }
+
+  function handleApply() {
+    onApply(draft); // the PARENT decides what "apply" means
+  }
+
+  return (
+    <aside className="sidebar" aria-label="Product filters">
+      <div className="sidebar-header">
+        <h2>Filters</h2>
+        <button type="button" className="sidebar-clear" onClick={handleClear}>
+          Clear all
+        </button>
+      </div>
+
+      <div className="sidebar-body">
+        <section aria-labelledby="sidebar-categories-heading">
+          <h3 id="sidebar-categories-heading">Categories</h3>
+          <ul className="sidebar-categories">
+            <li>
+              <button
+                type="button"
+                className={`sidebar-category ${draft.category === "all" ? "is-active" : ""}`}
+                onClick={() => selectCategory("all")}
+              >
+                <span className="sidebar-category-name">All products</span>
+                <span className="sidebar-count">{productsForCategories.length}</span>
+              </button>
+            </li>
+            {categories.map((category) => (
+              <li key={category.name}>
+                <button
+                  type="button"
+                  className={`sidebar-category ${draft.category === category.name ? "is-active" : ""}`}
+                  onClick={() => selectCategory(category.name)}
+                >
+                  <span className="sidebar-category-name">
+                    {category.name.replaceAll("-", " ")}
+                  </span>
+                  <span className="sidebar-count">{category.count}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <fieldset className="sidebar-section sidebar-fieldset">
+          <legend>Brands</legend>
+          {visibleBrands.map((brand) => (
+            <label key={brand.name} className="sidebar-brand">
+              <input
+                type="checkbox"
+                checked={draft.brands.includes(brand.name)}
+                onChange={() => toggleBrand(brand.name)}
+              />
+              <span className="sidebar-brand-name">{brand.name}</span>
+              <span className="sidebar-count">{brand.count}</span>
+            </label>
+          ))}
+          {brands.length > VISIBLE_BRANDS && (
+            <button
+              type="button"
+              className="sidebar-clear"
+              onClick={() => setShowAllBrands(!showAllBrands)}
+            >
+              {showAllBrands ? "Show fewer" : `Show all ${brands.length} brands`}
+            </button>
+          )}
+        </fieldset>
+
+        <section className="sidebar-section" aria-labelledby="sidebar-price-heading">
+          <h3 id="sidebar-price-heading">Price</h3>
+          <label className="sidebar-price-label">
+            <span>
+              {draft.maxPrice === null ? "Any price" : `Up to $${draft.maxPrice}`}
+            </span>
+            <input
+              type="range"
+              min="0"
+              max={maxProductPrice}
+              step="1"
+              value={sliderValue}
+              onChange={(event) => changePrice(Number(event.target.value))}
+            />
+          </label>
+          <div className="sidebar-quick-prices">
+            {QUICK_PRICES.map((price) => (
+              <button
+                key={price}
+                type="button"
+                className={`sidebar-quick ${draft.maxPrice === price ? "is-active" : ""}`}
+                onClick={() => changePrice(price)}
+              >
+                Under ${price}
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <div className="sidebar-footer">
+        <button type="button" className="sidebar-apply" onClick={handleApply}>
+          Apply filters
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+export default SidebarFilter;
+
+```
+
+### `pages/HomePage.jsx`
+
+```jsx
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CategoryCarousel from "../components/CategoryCarousel";
+import ProductList from "../components/ProductList";
+import { getProducts } from "../services/productService";
+import HeroSlider from "../components/HeroSlider";
+import "../styles/ProductsCatalog.css";
+import SidebarFilter from "../components/SidebarFilter";
+import { buildSearchParams } from "../utils/filterProducts";
+
+function HomePage() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        setProducts(await getProducts());
+      } catch (err) {
+        setError(err.message || "Unable to load products.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadProducts();
+  }, []);
+
+  const categories = useMemo(() => {
+    const categoriesByName = new Map();
+
+    for (const product of products) {
+      const existing = categoriesByName.get(product.category);
+
+      if (existing) {
+        existing.count += 1;
+      } else {
+        categoriesByName.set(product.category, {
+          name: product.category,
+          label: product.category.replaceAll("-", " "),
+          count: 1,
+          image: product.thumbnail,
+        });
+      }
+    }
+
+    return [...categoriesByName.values()].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [products]);
+
+  const popularProducts = useMemo(
+    () => [...products].sort((a, b) => b.rating - a.rating).slice(0, 12),
+    [products],
+  );
+
+  // The homepage does NOT filter anything itself.
+  // It saves the chosen filters in the URL and sends the user to /products.
+  function handleApply(filters) {
+    const params = buildSearchParams(new URLSearchParams(), filters);
+    navigate({ pathname: "/products", search: params.toString() });
+  }
+
+  if (loading) return <p role="status">Loading products...</p>;
+  if (error) return <p role="alert">Error: {error}</p>;
+
+  return (
+    <section className="products">
+      <HeroSlider />
+
+      <CategoryCarousel
+        categories={categories}
+        productCount={products.length}
+        allImage={products[0]?.thumbnail}
+      />
+
+      <div className="catalog-layout">
+        <SidebarFilter products={products} onApply={handleApply} />
+
+        <section aria-labelledby="popular-products-heading">
+          <div className="products-heading">
+            <h2 id="popular-products-heading">Popular Products</h2>
+            <p className="product-count">{popularProducts.length} Products</p>
+          </div>
+
+          <ProductList products={popularProducts} />
+        </section>
+      </div>
+    </section>
+  );
+}
+
+export default HomePage;
+
+```
+
+### `pages/ProductsPage.jsx`
+
+```jsx
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { getProducts } from "../services/productService";
+import SidebarFilter from "../components/SidebarFilter";
+import ProductList from "../components/ProductList";
+import ProductHeading from "../components/ProductHeading";
+import { filterProducts } from "../services/filterProducts";
+import { buildSearchParams, parseFilters } from "../utils/filterProducts";
+import "../styles/ProductsCatalog.css";
+
+function ProductsPage() {
+  const [products, setProducts] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        setProducts(await getProducts());
+      } catch (err) {
+        setError(err.message || "Unable to load products.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProducts();
+  }, []);
+
+  // The URL is the single source of truth for the applied filters.
+  const searchTerm = searchParams.get("search") ?? "";
+  const filters = parseFilters(searchParams);
+
+  // Step 1: navbar search.  Step 2: sidebar filters.
+  const searchedProducts = products.filter((product) =>
+    product.title.toLowerCase().includes(searchTerm.trim().toLowerCase()),
+  );
+  const filteredProducts = filterProducts(searchedProducts, filters);
+
+  function handleApply(newFilters) {
+    setSearchParams(buildSearchParams(searchParams, newFilters));
+  }
+
+  function handleClearFilters() {
+    setSearchParams({});
+  }
+
+  if (loading) return <p role="status">Loading products...</p>;
+  if (error) return <p role="alert">Error: {error}</p>;
+
+  return (
+    <section className="products">
+      <div className="catalog-layout">
+        {/* key: when the applied filters change (carousel click, back button...)
+            the sidebar is re-created, so its draft matches the URL again. */}
+        <SidebarFilter
+          key={JSON.stringify(filters)}
+          products={searchedProducts}
+          appliedFilters={filters}
+          onApply={handleApply}
+        />
+
+        <section aria-label="Product results">
+          <ProductHeading count={filteredProducts.length} />
+          {filteredProducts.length > 0 ? (
+            <ProductList products={filteredProducts} />
+          ) : (
+            <div className="empty-state">
+              <p className="empty-results">No products match your search.</p>
+              <button type="button" onClick={handleClearFilters}>Clear filters</button>
+            </div>
+          )}
+        </section>
+      </div>
+    </section>
+  );
+}
+
+export default ProductsPage;
+
+```
+
+### `styles/SidebarFilter.css`
+
+```css
+/* The sidebar stays in view while the products scroll.
+   - position: sticky  -> sticks below the navbar (navbar is sticky at top: 0)
+   - max-height        -> never taller than the screen
+   - .sidebar-body     -> scrolls inside the sidebar if filters are long
+   - .sidebar-footer   -> Apply button is always visible */
+.sidebar {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 6rem);
+  padding: 1rem;
+  position: sticky;
+  top: 5rem;
+}
+
+.sidebar-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sidebar-body {
+  flex: 1;
+  min-height: 0; /* lets a flex child shrink so overflow works */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.25rem;
+}
+
+.sidebar-footer {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.sidebar-apply {
+  background: #166534;
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.65rem 1rem;
+  width: 100%;
+}
+
+.sidebar-apply:hover {
+  background: #14532d;
+}
+
+.sidebar h2,
+.sidebar h3 {
+  margin: 0;
+}
+
+.sidebar h2 {
+  font-size: 1.15rem;
+}
+
+.sidebar h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-clear {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.sidebar-clear:hover {
+  text-decoration: underline;
+}
+
+.sidebar-section {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.sidebar-categories {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-category {
+  align-items: center;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  justify-content: space-between;
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  width: 100%;
+}
+
+.sidebar-category:hover {
+  background: #f1f5f9;
+}
+
+.sidebar-category.is-active {
+  background: #f0fdf4;
+  color: #166534;
+  font-weight: 700;
+}
+
+.sidebar-category:focus-visible,
+.sidebar-quick:focus-visible,
+.sidebar-apply:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.sidebar-category-name {
+  text-transform: capitalize;
+}
+
+.sidebar-fieldset {
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  display: grid;
+  gap: 0.4rem;
+  margin-inline: 0;
+  min-width: 0;
+  padding-inline: 0;
+}
+
+.sidebar-fieldset legend {
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0;
+}
+
+.sidebar-brand {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sidebar-brand-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-price-label {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sidebar-price-label input {
+  width: 100%;
+}
+
+.sidebar-quick-prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.sidebar-quick {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.7rem;
+}
+
+.sidebar-quick:hover {
+  border-color: #166534;
+}
+
+.sidebar-quick.is-active {
+  background: #f0fdf4;
+  border-color: #166534;
+  color: #166534;
+}
+
+.sidebar-count {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+/* On small screens the sidebar sits above the products, so no sticky. */
+@media (max-width: 800px) {
+  .sidebar {
+    max-height: none;
+    position: static;
+  }
+
+  .sidebar-body {
+    overflow-y: visible;
+  }
+}
+
+```
+
+### `src/styles/ProductsCatalog.css`
+
+Only one change: replace every `.home-layout` with `.catalog-layout` (2 places).
+
+## 10. Not tested in a browser
+
+I could not run `npm install` here, so the UI was not run. I tested the URL helpers (round trip, `&` in brand names, `?search=` kept, bad `maxPrice`). Please run `npm run dev` and try: pick filters on Home → Apply → check Products shows them ticked; scroll to confirm the sidebar stays; use the navbar search; refresh the page.

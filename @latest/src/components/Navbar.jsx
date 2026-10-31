@@ -31,7 +31,7 @@ function Navbar() {
   }
 
   function closeMenu() {
-    setIsMenuOpen(false);
+    setIsMenuOpen(!isMenuOpen);
   }
 
   return (
@@ -64,14 +64,14 @@ function Navbar() {
           if (event.key === "Escape") closeMenu();
         }}
       >
-        <NavLink to="/" end aria-label="Home" title="Home" onClick={closeMenu}><FiHome aria-hidden="true" /><span className="navbar-link-label">Home</span></NavLink>
-        <NavLink to="/products" aria-label="Products" title="Products" onClick={closeMenu}><FiGrid aria-hidden="true" /><span className="navbar-link-label">Products</span></NavLink>
-        <NavLink to="/orders" aria-label="Orders" title="Orders" onClick={closeMenu}><FiPackage aria-hidden="true" /><span className="navbar-link-label">Orders</span></NavLink>
+        <NavLink to="/" end aria-label="Home" title="Home" onClick={closeMenu}><FiHome aria-hidden="true" /><span >Home</span></NavLink>
+        <NavLink to="/products" aria-label="Products" title="Products" onClick={closeMenu}><FiGrid aria-hidden="true" /><span >Products</span></NavLink>
+        <NavLink to="/orders" aria-label="Orders" title="Orders" onClick={closeMenu}><FiPackage aria-hidden="true" /><span >Orders</span></NavLink>
         <NavLink to="/cart" aria-label={`Cart, ${cartCount} items`} title="Cart" onClick={closeMenu}>
-          <FiShoppingCart aria-hidden="true" /><span className="navbar-link-label">Cart</span><span className="navbar-badge">{cartCount}</span>
+          <FiShoppingCart aria-hidden="true" /><span>Cart</span><span className="navbar-badge">{cartCount}</span>
         </NavLink>
         <NavLink to="/wishlist" aria-label={`Wishlist, ${wishlist.length} items`} title="Wishlist" onClick={closeMenu}>
-          <FiHeart aria-hidden="true" /><span className="navbar-link-label">Wishlist</span><span className="navbar-badge">{wishlist.length}</span>
+          <FiHeart aria-hidden="true" /><span >Wishlist</span><span className="navbar-badge">{wishlist.length}</span>
         </NavLink>
         {user ? (
           <>

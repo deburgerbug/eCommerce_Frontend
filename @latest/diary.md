@@ -33,4 +33,15 @@ Make Image slider with 2 images , reference to  "https://preview.themewagon.com/
 I did - I imported 2 images in assets folder, from that i have to make a slider which only present there as slider slider will be our component on HomePage. 
 Approch 1- We can use the index of image to define curent index on page,
 
-## Task 2
+
+## Date 31/10/2026
+
+### Task 1 Context for Products
+
+-Make the changes in website. 
+-FIrst make context for products. Currently website is fetching Products fetched by ProductsPage and HomePage are individual API calls. I can make a context for it. That way i can remove the need of extra API call.
+
+-- My approach was to make buildCategories function in which, i have used new Map() method because i want unique category name and their count to display it as a content on the card, it should not have duplicate data that's why i used it.
+
+
+### Task 2 Sidebar Filter for Home and Products page.

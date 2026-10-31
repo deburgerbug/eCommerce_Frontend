@@ -176,10 +176,10 @@
   outline: 3px solid #f59e0b;
   outline-offset: 2px;
 }
-.home-layout {
-  align-items: start;
+.home-layout{
   display: grid;
-  gap: 1.5rem;
+  align-items: start;
+  gap: 1rem;
   grid-template-columns: 16rem minmax(0, 1fr);
 }
 
