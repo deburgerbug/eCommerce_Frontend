@@ -62,7 +62,7 @@ function HomePage() {
       <CategoryCarousel
         categories={categories}
         productCount={products.length}
-        allImage={products[1100]?.thumbnail}
+        allImage={products[0]?.thumbnail}
       />
       <div>
         <section aria-labelledby="popular-products-heading">
