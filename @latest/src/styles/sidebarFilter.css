@@ -1,3 +1,71 @@
-.sidebar-filter{
-    margin-left: 25%;
+.sidebar {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-sizing: border-box;
+  padding: 1rem;
+}
+
+.sidebar-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sidebar h2,
+.sidebar h3 {
+  margin: 0;
+}
+
+.sidebar h2 {
+  font-size: 1.15rem;
+}
+
+.sidebar h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-clear {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.sidebar-clear:hover {
+  text-decoration: underline;
+}
+
+.sidebar-categories {
+  list-style: none;
+  margin: 0;
+  max-height: 18rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 0.25rem 0 0;
+}
+
+.sidebar-categories li {
+  align-items: center;
+  border-radius: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.45rem 0.5rem;
+}
+
+.sidebar-categories li:hover {
+  background: #f1f5f9;
+}
+
+.sidebar-category-name {
+  text-transform: capitalize;
+}
+
+.sidebar-count {
+  color: #64748b;
+  font-size: 0.85rem;
 }

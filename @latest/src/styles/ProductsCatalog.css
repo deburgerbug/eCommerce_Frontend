@@ -176,6 +176,18 @@
   outline: 3px solid #f59e0b;
   outline-offset: 2px;
 }
+.home-layout {
+  align-items: start;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 16rem minmax(0, 1fr);
+}
+
+@media (max-width: 800px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media (max-width: 425px) {
   .category-carousel {
