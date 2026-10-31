@@ -58,22 +58,22 @@ function HomePage() {
   return (
     <section className="products">
       <HeroSlider />
-      
+
       <CategoryCarousel
         categories={categories}
         productCount={products.length}
-        allImage={products[1100]?.thumbnail}
+        allImage={products[0]?.thumbnail}
       />
-      <div>
+      <div className="home-layout" >
+        <SidebarFilter products={products} ></SidebarFilter>
         <section aria-labelledby="popular-products-heading">
-        <div className="home-layout">
-          <SidebarFilter products={products} ></SidebarFilter>
-        </div>
+          <div className="home-layout">
+          </div>
 
-        <ProductList products={popularProducts} />
-      </section>
+          <ProductList products={popularProducts} />
+        </section>
       </div>
-      
+
     </section>
   );
 }
